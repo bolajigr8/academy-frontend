@@ -1,0 +1,702 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* ============================================================
+   GOLAFLY ACADEMY: globals.css
+   Every designer value below is copied verbatim from the prototype:
+     colors_and_type.css  -> sections A, B, C
+     css/amk-core.css     -> sections D, F, G (module tokens, base, keyframes)
+   Nothing is re-typed, converted or rounded. Components never use raw hex
+   or Tailwind palette colors: the palette is wiped in @theme below.
+   ============================================================ */
+
+/* Theme mechanism: next-themes writes data-theme="dark|light" on <html>. */
+@custom-variant dark (&:is([data-theme="dark"] *));
+
+/* ------------------------------------------------------------
+   Source breakpoints, exactly. The prototype is desktop-first with INCLUSIVE
+   max-width queries. Tailwind's own max-[Npx]: compiles to "width < N" (it
+   excludes N), so each source query gets its own variant. Declared from the
+   widest to the narrowest so the narrower rule wins, as in the source.
+   Usage: le-1024:hidden  (max-width: 1024px)   ge-1025:block (min-width: 1025px)
+   Queries in the source: 480, 600, 640, 720, 900, 1024, 1100, 1180, 1200, min 1025.
+   ------------------------------------------------------------ */
+@custom-variant le-1200 (@media (max-width: 1200px));
+@custom-variant le-1180 (@media (max-width: 1180px));
+@custom-variant le-1100 (@media (max-width: 1100px));
+@custom-variant le-1024 (@media (max-width: 1024px));
+@custom-variant ge-1025 (@media (min-width: 1025px));
+@custom-variant le-900 (@media (max-width: 900px));
+@custom-variant le-720 (@media (max-width: 720px));
+@custom-variant le-640 (@media (max-width: 640px));
+@custom-variant le-600 (@media (max-width: 600px));
+@custom-variant le-480 (@media (max-width: 480px));
+
+/* ------------------------------------------------------------
+   E. @theme static: non-flipping scales (colors_and_type.css)
+   "static" emits each variable on :root, so the designer's own name
+   is also the Tailwind name (rounded-lg = --radius-lg = 18px).
+   ------------------------------------------------------------ */
+@theme static {
+  --color-*: initial;
+  --radius-*: initial;
+
+  /* Radii (colors_and_type.css :root, "Radii") */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 28px;
+  --radius-2xl: 40px;
+  --radius-pill: 999px;
+
+  /* Easing (colors_and_type.css :root, "Motion") */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Font families: designer stacks, fed by next/font (see layout.tsx) */
+  --font-display: var(--font-space-grotesk), "Inter", system-ui, -apple-system, sans-serif;
+  --font-body: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  --font-heading: var(--font-display);
+  --font-sans: var(--font-body);
+
+  /* Keyframes (css/amk-core.css:370-371, renamed amk-fade -> fade, amk-rise -> rise).
+     Defaults match the two most common source uses; other durations use
+     animate-[rise_var(--dur-base)_var(--ease-out)] where the source does. */
+  --animate-fade: fade var(--dur-base) var(--ease-out);
+  --animate-rise: rise var(--dur-slow) var(--ease-out);
+
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* ------------------------------------------------------------
+   F. @theme inline: every designer token under its own name
+   (class -> token is 1:1: text-fg-1 -> --fg-1, bg-bg-3 -> --bg-3)
+   ------------------------------------------------------------ */
+@theme inline {
+  /* Foreground / background / surface */
+  --color-fg-1: var(--fg-1);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-fg-4: var(--fg-4);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-accent: var(--fg-accent);
+  --color-fg-on-accent: var(--fg-on-accent);
+  --color-text-on-neon: var(--text-on-neon);
+  --color-bg-0: var(--bg-0);
+  --color-bg-1: var(--bg-1);
+  --color-bg-2: var(--bg-2);
+  --color-bg-3: var(--bg-3);
+  --color-bg-4: var(--bg-4);
+  --color-bg-accent: var(--bg-accent);
+  --color-surface-elevated: var(--surface-elevated);
+
+  /* Borders */
+  --color-border-1: var(--border-1);
+  --color-border-2: var(--border-2);
+  --color-border-3: var(--border-3);
+  --color-border-accent: var(--border-accent);
+
+  /* Overlays, tints, grid lines */
+  --color-overlay-soft: var(--overlay-soft);
+  --color-overlay-mid: var(--overlay-mid);
+  --color-overlay-strong: var(--overlay-strong);
+  --color-overlay-deep: var(--overlay-deep);
+  --color-tint-neon-1: var(--tint-neon-1);
+  --color-tint-neon-2: var(--tint-neon-2);
+  --color-tint-neon-3: var(--tint-neon-3);
+  --color-tint-neon-4: var(--tint-neon-4);
+  --color-grid-line: var(--grid-line);
+  --color-grid-line-strong: var(--grid-line-strong);
+
+  /* Glass */
+  --color-glass-bg: var(--glass-bg);
+  --color-glass-bg-strong: var(--glass-bg-strong);
+  --color-glass-bg-nav: var(--glass-bg-nav);
+  --color-glass-bg-nav-scrolled: var(--glass-bg-nav-scrolled);
+  --color-glass-border: var(--glass-border);
+  --color-glass-border-neon: var(--glass-border-neon);
+
+  /* Raw palette */
+  --color-gf-neon: var(--gf-neon);
+  --color-gf-neon-bright: var(--gf-neon-bright);
+  --color-gf-neon-deep: var(--gf-neon-deep);
+  --color-gf-neon-shadow: var(--gf-neon-shadow);
+  --color-gf-neon-glow: var(--gf-neon-glow);
+  --color-gf-black: var(--gf-black);
+  --color-gf-ink: var(--gf-ink);
+  --color-gf-night: var(--gf-night);
+  --color-gf-coal: var(--gf-coal);
+  --color-gf-slate: var(--gf-slate);
+  --color-gf-steel: var(--gf-steel);
+  --color-gf-ash: var(--gf-ash);
+  --color-gf-stone: var(--gf-stone);
+  --color-gf-mist: var(--gf-mist);
+  --color-gf-chalk: var(--gf-chalk);
+  --color-gf-white: var(--gf-white);
+  --color-gf-paper: var(--gf-paper);
+  --color-gf-mist-light: var(--gf-mist-light);
+  --color-gf-chalk-deep: var(--gf-chalk-deep);
+  --color-gf-stone-light: var(--gf-stone-light);
+  --color-gf-success: var(--gf-success);
+  --color-gf-info: var(--gf-info);
+  --color-gf-warning: var(--gf-warning);
+  --color-gf-danger: var(--gf-danger);
+
+  /* Module accent ink (css/amk-core.css:18) */
+  --color-amk-accent-ink: var(--amk-accent-ink);
+  --color-amk-line: var(--amk-line);
+  --color-amk-stripe: var(--amk-stripe);
+
+  /* Type scale. Prefixed so plain text-sm / leading-tight / tracking-tight
+     keep their Tailwind meaning inside the shadcn primitives. */
+  --text-fs-12: var(--fs-12);
+  --text-fs-13: var(--fs-13);
+  --text-fs-14: var(--fs-14);
+  --text-fs-16: var(--fs-16);
+  --text-fs-18: var(--fs-18);
+  --text-fs-20: var(--fs-20);
+  --text-fs-24: var(--fs-24);
+  --text-fs-32: var(--fs-32);
+  --text-fs-40: var(--fs-40);
+  --text-fs-56: var(--fs-56);
+  --text-fs-72: var(--fs-72);
+  --text-fs-96: var(--fs-96);
+  --leading-lh-tight: var(--lh-tight);
+  --leading-lh-snug: var(--lh-snug);
+  --leading-lh-normal: var(--lh-normal);
+  --leading-lh-relaxed: var(--lh-relaxed);
+  --tracking-gf-tight: var(--tracking-tight);
+  --tracking-gf-normal: var(--tracking-normal);
+  --tracking-gf-wide: var(--tracking-wide);
+  --tracking-gf-widest: var(--tracking-widest);
+
+  /* shadcn semantic names: aliases only (values live in section H) */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+/* ============================================================
+   A. SHARED RAW PALETTE: colors_and_type.css section 1 (verbatim).
+   Radii, easing and fonts moved to @theme static above; the unused
+   4px --space-* scale is dropped (Tailwind's own 4px scale is used).
+   ============================================================ */
+:root {
+  /* Brand — Neon */
+  --gf-neon:            #B7FF00;
+  --gf-neon-bright:     #C8FF33;
+  --gf-neon-deep:       #6DBE45;
+  --gf-neon-shadow:     rgba(183, 255, 0, 0.35);
+  --gf-neon-glow:       rgba(183, 255, 0, 0.55);
+
+  /* Neutrals — full ramp (used by both themes as raw values) */
+  --gf-black:           #000000;
+  --gf-ink:             #050606;
+  --gf-night:           #0B0D0C;
+  --gf-coal:            #121513;
+  --gf-slate:           #1A1E1B;
+  --gf-steel:           #282D29;
+  --gf-ash:             #3B4239;
+  --gf-stone:           #6C7668;
+  --gf-mist:            #A6B0A3;
+  --gf-chalk:           #D9DED6;
+  --gf-white:           #F5F7F3;
+
+  /* Light-theme extension neutrals (warm whites) */
+  --gf-paper:           #FAFAF7;   /* Light app base */
+  --gf-mist-light:      #F2F3EE;   /* Light panels */
+  --gf-chalk-deep:      #E8EAE3;   /* Light cards */
+  --gf-stone-light:     #DCDFD6;   /* Light raised cards */
+
+  /* Semantic colors (shared) */
+  --gf-success:         #7CF46B;
+  --gf-info:            #5BC8FF;
+  --gf-warning:         #FFC857;
+  --gf-danger:          #FF4E4E;
+
+  /* Typography — scale */
+  --fs-12:              12px;
+  --fs-13:              13px;
+  --fs-14:              14px;
+  --fs-16:              16px;
+  --fs-18:              18px;
+  --fs-20:              20px;
+  --fs-24:              24px;
+  --fs-32:              32px;
+  --fs-40:              40px;
+  --fs-56:              56px;
+  --fs-72:              72px;
+  --fs-96:              96px;
+
+  --lh-tight:           1.04;
+  --lh-snug:            1.18;
+  --lh-normal:          1.45;
+  --lh-relaxed:         1.6;
+
+  --tracking-tight:     -0.02em;
+  --tracking-normal:    0;
+  --tracking-wide:      0.06em;
+  --tracking-widest:    0.22em;
+
+  /* Motion (easing curves live in @theme static above) */
+  --dur-fast:           120ms;
+  --dur-base:           220ms;
+  --dur-slow:           420ms;
+  --dur-reveal:         700ms;
+
+  /* Layout */
+  --max-w:              1280px;
+  --gutter:             24px;
+  --stroke:             1px;
+}
+
+/* ============================================================
+   B. DARK THEME (default): colors_and_type.css section 2 (verbatim)
+   ============================================================ */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Foreground */
+  --fg-1:               var(--gf-white);
+  --fg-2:               var(--gf-chalk);
+  --fg-3:               var(--gf-mist);
+  --fg-4:               var(--gf-stone);
+  --fg-muted:           var(--gf-ash);
+  --fg-accent:          var(--gf-neon);
+  --fg-on-accent:       var(--gf-black);
+  --text-on-neon:       #000000;
+
+  /* Background */
+  --bg-0:               var(--gf-black);
+  --bg-1:               var(--gf-ink);
+  --bg-2:               var(--gf-night);
+  --bg-3:               var(--gf-coal);
+  --bg-4:               var(--gf-slate);
+  --bg-accent:          var(--gf-neon);
+  --surface-elevated:   var(--gf-coal);
+
+  /* Borders */
+  --border-1:           rgba(245, 247, 243, 0.06);
+  --border-2:           rgba(245, 247, 243, 0.12);
+  --border-3:           rgba(245, 247, 243, 0.20);
+  --border-accent:      rgba(183, 255, 0, 0.4);
+
+  /* Overlays / scrims (used in image masks, hero gradients, footer) */
+  --overlay-soft:       rgba(0, 0, 0, 0.20);
+  --overlay-mid:        rgba(0, 0, 0, 0.55);
+  --overlay-strong:     rgba(0, 0, 0, 0.85);
+  --overlay-deep:       rgba(0, 0, 0, 0.95);
+
+  /* Subtle background tints */
+  --tint-neon-1:        rgba(183, 255, 0, 0.04);
+  --tint-neon-2:        rgba(183, 255, 0, 0.08);
+  --tint-neon-3:        rgba(183, 255, 0, 0.12);
+  --tint-neon-4:        rgba(183, 255, 0, 0.18);
+
+  /* Grid / pattern lines */
+  --grid-line:          rgba(183, 255, 0, 0.04);
+  --grid-line-strong:   rgba(183, 255, 0, 0.08);
+
+  /* Gradients */
+  --grad-neon:          linear-gradient(135deg, #B7FF00 0%, #6DBE45 100%);
+  --grad-neon-soft:     linear-gradient(135deg, rgba(183,255,0,0.20) 0%, rgba(109,190,69,0.05) 100%);
+  --grad-ink:           linear-gradient(180deg, #0B0D0C 0%, #000000 100%);
+  --grad-ink-reverse:   linear-gradient(180deg, #000000 0%, #0B0D0C 100%);
+  --grad-radial-neon:   radial-gradient(circle at 50% 50%, rgba(183,255,0,0.35) 0%, rgba(183,255,0,0) 70%);
+  --grad-radial-soft:   radial-gradient(ellipse at 50% 50%, rgba(183,255,0,0.10) 0%, rgba(183,255,0,0) 65%);
+  --grad-stadium:       linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 100%);
+  --grad-stadium-soft:  linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,0.80) 100%);
+  --grad-section:       linear-gradient(180deg, #000000 0%, #0B0D0C 100%);
+  --grad-section-rev:   linear-gradient(180deg, #0B0D0C 0%, #000000 100%);
+
+  /* Glass */
+  --glass-bg:           rgba(18, 21, 19, 0.55);
+  --glass-bg-strong:    rgba(18, 21, 19, 0.75);
+  --glass-bg-nav:       rgba(11, 13, 12, 0.60);
+  --glass-bg-nav-scrolled: rgba(5, 6, 6, 0.92);
+  --glass-border:       rgba(245, 247, 243, 0.08);
+  --glass-border-neon:  rgba(183, 255, 0, 0.20);
+  --glass-blur:         blur(18px) saturate(140%);
+
+  /* Drop shadows */
+  --shadow-xs:          0 1px 2px rgba(0,0,0,0.4);
+  --shadow-sm:          0 2px 6px rgba(0,0,0,0.5);
+  --shadow-md:          0 8px 24px rgba(0,0,0,0.55);
+  --shadow-lg:          0 20px 60px rgba(0,0,0,0.65);
+  --shadow-xl:          0 40px 120px rgba(0,0,0,0.8);
+  --shadow-nav:         0 10px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(183,255,0,0.12);
+
+  /* Neon glows (full strength on dark) */
+  --glow-neon-sm:       0 0 0 1px rgba(183,255,0,0.4), 0 0 12px rgba(183,255,0,0.35);
+  --glow-neon-md:       0 0 0 1px rgba(183,255,0,0.5), 0 0 24px rgba(183,255,0,0.45), 0 0 60px rgba(183,255,0,0.15);
+  --glow-neon-lg:       0 0 0 1px rgba(183,255,0,0.6), 0 0 40px rgba(183,255,0,0.6), 0 0 120px rgba(183,255,0,0.25);
+  --glow-neon-text:     0 0 14px rgba(183,255,0,0.55), 0 0 32px rgba(183,255,0,0.25);
+
+  /* Inset effects */
+  --inner-stroke:       inset 0 0 0 1px rgba(245,247,243,0.06);
+  --inner-neon:         inset 0 0 0 1px rgba(183,255,0,0.25), inset 0 0 24px rgba(183,255,0,0.08);
+
+  /* Image media filter (dark mode darkens images) */
+  --filter-media:       grayscale(0.3) contrast(1.05) brightness(0.85);
+  --filter-media-strong: grayscale(0.5) contrast(1.05) brightness(0.55);
+  --filter-logo-mono:   brightness(0) invert(1);
+  --filter-logo-blend:  grayscale(1) brightness(1.8) contrast(0.7);
+}
+
+/* ============================================================
+   C. LIGHT THEME: colors_and_type.css section 3 (verbatim)
+   The unused :root[data-theme="auto"] fallback is not ported.
+   ============================================================ */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Foreground (inverted) — darker for better contrast on light */
+  --fg-1:               #1A1E1B;   /* Was #0B0D0C - darker text */
+  --fg-2:               #282D29;   /* Was #1A1E1B - secondary text */
+  --fg-3:               #3B4239;   /* Was #3B4239 - muted text (unchanged) */
+  --fg-4:               #6C7668;   /* Was #6C7668 - subtle text (unchanged) */
+  --fg-muted:           var(--gf-mist);
+  --fg-accent:          var(--gf-neon-deep);
+  --fg-on-accent:       var(--gf-black);
+  --text-on-neon:       #000000;
+
+  /* Background (warm whites) — stronger contrast for depth */
+  --bg-0:               #FFFFFF;
+  --bg-1:               #F4F5F0;   /* Was #FAFAF7 - warmer, more contrast */
+  --bg-2:               #EDEEE8;   /* Was #F2F3EE - more differentiated */
+  --bg-3:               #E4E6DE;   /* Was #E8EAE3 - clearer card distinction */
+  --bg-4:               #D8DAD4;   /* Was #DCDFD6 - raised surfaces */
+  --bg-accent:          var(--gf-neon);
+  --surface-elevated:   #FFFFFF;
+
+  /* Borders (dark on light) */
+  --border-1:           rgba(11, 13, 12, 0.08);
+  --border-2:           rgba(11, 13, 12, 0.16);
+  --border-3:           rgba(11, 13, 12, 0.24);
+  --border-accent:      rgba(109, 190, 69, 0.55);
+
+  /* Semantic colors — darkened for AA contrast on light backgrounds */
+  --gf-success:         #3A8C28;
+  --gf-info:            #2A7AB8;
+  --gf-warning:         #D4820A;
+  --gf-danger:          #B82424;
+
+  /* Overlays / scrims — stronger for better depth */
+  --overlay-soft:       rgba(11, 13, 12, 0.12);
+  --overlay-mid:        rgba(11, 13, 12, 0.35);
+  --overlay-strong:     rgba(11, 13, 12, 0.65);
+  --overlay-deep:       rgba(11, 13, 12, 0.85);
+
+  /* Subtle neon tints — more visible on light to add depth */
+  --tint-neon-1:        rgba(109, 190, 69, 0.10);
+  --tint-neon-2:        rgba(109, 190, 69, 0.18);
+  --tint-neon-3:        rgba(109, 190, 69, 0.26);
+  --tint-neon-4:        rgba(109, 190, 69, 0.38);
+
+  /* Grid lines — more visible on light bg */
+  --grid-line:          rgba(11, 13, 12, 0.06);
+  --grid-line-strong:   rgba(11, 13, 12, 0.12);
+
+  /* Gradients — more pronounced transitions for depth */
+  --grad-neon:          linear-gradient(135deg, #B7FF00 0%, #6DBE45 100%);
+  --grad-neon-soft:     linear-gradient(135deg, rgba(183,255,0,0.30) 0%, rgba(109,190,69,0.12) 100%);
+  --grad-ink:           linear-gradient(180deg, #FFFFFF 0%, var(--gf-mist-light) 100%);
+  --grad-ink-reverse:   linear-gradient(180deg, var(--gf-mist-light) 0%, #FFFFFF 100%);
+  --grad-radial-neon:   radial-gradient(circle at 50% 50%, rgba(109,190,69,0.40) 0%, rgba(109,190,69,0) 70%);
+  --grad-radial-soft:   radial-gradient(ellipse at 50% 50%, rgba(109,190,69,0.18) 0%, rgba(109,190,69,0) 65%);
+  --grad-stadium:       linear-gradient(180deg, rgba(11,13,12,0) 0%, rgba(11,13,12,0.65) 100%);
+  --grad-stadium-soft:  linear-gradient(180deg, rgba(11,13,12,0) 30%, rgba(11,13,12,0.55) 100%);
+  --grad-section:       linear-gradient(180deg, var(--gf-mist-light) 0%, var(--gf-chalk-deep) 100%);
+  --grad-section-rev:   linear-gradient(180deg, var(--gf-chalk-deep) 0%, var(--gf-mist-light) 100%);
+
+  /* Glass — light glassmorphism */
+  --glass-bg:           rgba(255, 255, 255, 0.65);
+  --glass-bg-strong:    rgba(255, 255, 255, 0.85);
+  --glass-bg-nav:       rgba(255, 255, 255, 0.70);
+  --glass-bg-nav-scrolled: rgba(255, 255, 255, 0.92);
+  --glass-border:       rgba(11, 13, 12, 0.08);
+  --glass-border-neon:  rgba(109, 190, 69, 0.30);
+  --glass-blur:         blur(18px) saturate(160%);
+
+  /* Drop shadows — more depth on light backgrounds */
+  --shadow-xs:          0 1px 3px rgba(11,13,12,0.08);
+  --shadow-sm:          0 3px 8px rgba(11,13,12,0.12);
+  --shadow-md:          0 12px 32px rgba(11,13,12,0.14);
+  --shadow-lg:          0 24px 64px rgba(11,13,12,0.18);
+  --shadow-xl:          0 48px 100px rgba(11,13,12,0.22);
+  --shadow-nav:         0 12px 48px rgba(11,13,12,0.14), 0 0 0 1px rgba(109,190,69,0.25);
+
+  /* Neon glows — more prominent on light for visibility */
+  --glow-neon-sm:       0 0 0 1px rgba(109,190,69,0.50), 0 0 16px rgba(109,190,69,0.30);
+  --glow-neon-md:       0 0 0 1px rgba(109,190,69,0.60), 0 0 24px rgba(109,190,69,0.40), 0 0 50px rgba(109,190,69,0.15);
+  --glow-neon-lg:       0 0 0 1px rgba(109,190,69,0.70), 0 0 36px rgba(109,190,69,0.45), 0 0 90px rgba(109,190,69,0.20);
+  --glow-neon-text:     0 0 16px rgba(109,190,69,0.40), 0 0 32px rgba(109,190,69,0.18);
+
+  /* Inset */
+  --inner-stroke:       inset 0 0 0 1px rgba(11,13,12,0.06);
+  --inner-neon:         inset 0 0 0 1px rgba(109,190,69,0.30), inset 0 0 24px rgba(109,190,69,0.06);
+
+  /* Image filters — light mode keeps images natural */
+  --filter-media:       contrast(1.02) saturate(1.05);
+  --filter-media-strong: contrast(1.05) brightness(0.92);
+  --filter-logo-mono:   brightness(0);
+  --filter-logo-blend:  grayscale(1) contrast(0.85) brightness(0.5);
+}
+
+/* ============================================================
+   D. MODULE TOKENS: css/amk-core.css:16-28 (body.amk-page).
+   Declared on :root so the theme flips them. Used as h-(--amk-nav-h),
+   w-(--amk-sb-w), z-(--amk-z-nav), top-(--amk-sticky-top).
+   ============================================================ */
+:root {
+  --amk-nav-h: 68px;
+  --amk-accent-ink: color-mix(in srgb, var(--fg-accent) 60%, var(--fg-1));
+  --amk-line: var(--border-2);
+  --amk-stripe: var(--tint-neon-1);
+  --amk-sb-w: 264px;
+  --amk-tabbar-h: 64px;
+  --amk-sticky-top: calc(var(--amk-nav-h) + 16px);
+  --amk-z-nav: 40;
+  --amk-z-sticky: 30;
+  --amk-z-overlay: 70;
+  --amk-z-toast: 80;
+}
+/* css/amk-core.css:455-457 */
+@media (max-width: 480px) {
+  :root {
+    --amk-nav-h: 60px;
+  }
+}
+
+/* ============================================================
+   H. SHADCN ALIAS LAYER: aliases to designer tokens, never new values.
+   Evidence per line is in token-parity-table.md / the Phase 0 table.
+   Sidebar and chart tokens are intentionally omitted (not used).
+   ============================================================ */
+:root {
+  --background: var(--bg-1);
+  --foreground: var(--fg-1);
+  --card: var(--surface-elevated);
+  --card-foreground: var(--fg-1);
+  --popover: var(--surface-elevated);
+  --popover-foreground: var(--fg-1);
+  --primary: var(--gf-neon);
+  --primary-foreground: var(--text-on-neon);
+  --secondary: var(--bg-3);
+  --secondary-foreground: var(--fg-1);
+  --muted: var(--bg-2);
+  --muted-foreground: var(--fg-3);
+  --accent: var(--tint-neon-1);
+  --accent-foreground: var(--fg-1);
+  --destructive: var(--gf-danger);
+  --border: var(--border-2);
+  --input: var(--border-2);
+  --ring: var(--amk-accent-ink);
+  --radius: var(--radius-lg);
+}
+
+/* ============================================================
+   G. BASE: css/amk-core.css:30-60 and colors_and_type.css:517-532
+   Tailwind preflight already covers: box-sizing, text-size-adjust,
+   zero margins, list resets, link/form inheritance, img/svg display.
+   Added below: only what preflight does not do.
+   ============================================================ */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    transition:
+      background-color var(--dur-base) var(--ease-out),
+      color var(--dur-base) var(--ease-out);
+  }
+
+  body {
+    background: var(--bg-1);
+    color: var(--fg-1);
+    font-family: var(--font-body);
+    font-size: var(--fs-16);
+    line-height: var(--lh-normal);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: clip; /* clip, not hidden: keeps position: sticky working */
+  }
+
+  svg {
+    max-width: 100%;
+  }
+
+  :where(button) {
+    cursor: pointer;
+  }
+  :where(fieldset) {
+    min-width: 0;
+  }
+
+  /* css/amk-core.css:55-58 */
+  :focus-visible {
+    outline: 2px solid var(--amk-accent-ink);
+    outline-offset: 3px;
+  }
+
+  /* css/amk-core.css:458-461 and colors_and_type.css:528-532 */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+      transition: none !important;
+    }
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+    /* Added: a loading spinner is a status, not decoration: it keeps turning
+       (slowly) so a running request stays visible with animations turned off */
+    .animate-spin {
+      animation-duration: 1.4s !important;
+    }
+  }
+}
+
+/* ============================================================
+   I. SHARED UTILITIES
+   ============================================================ */
+/* .amk-container, css/amk-core.css:67: 1280px max, 24px gutter at all widths */
+@utility am-container {
+  max-width: var(--max-w);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Glass surface: backdrop-filter with the designer's flipping --glass-blur
+   (used by the nav, search bar and sheets; css/amk-pages.css:9-16) */
+@utility am-glass {
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+/* Visually hidden, focusable-on-demand helper: .amk-sr, css/amk-core.css:59 */
+@utility am-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Mowing stripes: .amk-stripes, css/amk-core.css:270-272 (72px bands of --amk-stripe) */
+@utility am-stripes {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--amk-stripe) 0 72px,
+    transparent 72px 144px
+  );
+}
+
+/* Text link: .amk-link, css/amk-core.css:106-107 */
+@utility am-link {
+  padding-block: 4px;
+  color: var(--fg-1);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--amk-accent-ink);
+  text-underline-offset: 3px;
+  &:hover {
+    text-decoration-thickness: 2px;
+  }
+}
+
+/* Dual price range: two native range inputs on one track (.amk-range input, css/amk-pages.css:71-88).
+   Only the thumbs take pointer events, so both handles stay draggable. */
+@utility am-range-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: none;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+  z-index: 2;
+  &::-webkit-slider-runnable-track {
+    background: none;
+    height: 28px;
+  }
+  &::-moz-range-track {
+    background: none;
+  }
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    pointer-events: auto;
+    width: 24px;
+    height: 24px;
+    margin-top: 2px;
+    border-radius: 50%;
+    background: var(--gf-neon);
+    border: 2px solid var(--gf-black);
+    box-shadow: var(--shadow-sm);
+    cursor: grab;
+  }
+  &::-moz-range-thumb {
+    pointer-events: auto;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--gf-neon);
+    border: 2px solid var(--gf-black);
+    cursor: grab;
+  }
+  &:focus-visible {
+    outline: none;
+  }
+  &:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid var(--amk-accent-ink);
+    outline-offset: 3px;
+  }
+}

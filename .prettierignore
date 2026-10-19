@@ -1,0 +1,9 @@
+node_modules
+.next
+out
+build
+public
+bun.lock
+package-lock.json
+# Designer token blocks are copied verbatim from the prototype
+src/app/globals.css
