@@ -304,20 +304,33 @@ export async function saveListingImages(
   upload: { file: File; sortOrder: number; primary: boolean }[],
   deleteIds: number[]
 ): Promise<ApiListing> {
-  const form = new FormData()
-  upload.forEach((u, i) => {
-    form.append(`images[${i}][file]`, u.file)
-    form.append(`images[${i}][sort_order]`, String(u.sortOrder))
-    form.append(`images[${i}][is_primary]`, u.primary ? "1" : "0")
-  })
-  deleteIds.forEach((imageId, i) =>
-    form.append(`delete_image_ids[${i}]`, String(imageId))
-  )
-  const res = await apiClient.post<ApiResponse<ApiListing>>(
-    listingPath(id),
-    form
-  )
-  return res.data.data
+  // Removals first, then ONE request per new photo: a server drops an upload
+  // above its size limit without an error, so several photos in one request
+  // could silently lose them all (the backend then keeps its default image).
+  let latest: ApiListing | null = null
+  if (deleteIds.length || upload.length === 0) {
+    const form = new FormData()
+    deleteIds.forEach((imageId, i) =>
+      form.append(`delete_image_ids[${i}]`, String(imageId))
+    )
+    const res = await apiClient.post<ApiResponse<ApiListing>>(
+      listingPath(id),
+      form
+    )
+    latest = res.data.data
+  }
+  for (const u of upload) {
+    const form = new FormData()
+    form.append("images[0][file]", u.file)
+    form.append("images[0][sort_order]", String(u.sortOrder))
+    form.append("images[0][is_primary]", u.primary ? "1" : "0")
+    const res = await apiClient.post<ApiResponse<ApiListing>>(
+      listingPath(id),
+      form
+    )
+    latest = res.data.data
+  }
+  return latest as ApiListing
 }
 
 /** DELETE /academy/portal/listings/{id}: drafts only (422 otherwise) */

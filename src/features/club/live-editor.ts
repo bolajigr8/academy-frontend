@@ -122,13 +122,16 @@ export async function removeDraft(id: number): Promise<void> {
 
 /**
  * Which of the 10 steps are done, from what the backend has SAVED (never
- * from the step the user is on). Required steps follow the backend's submit
- * check (week 1 part 2, section 12: images step 2; description, type, level,
- * training frequency, duration step 3; ages and gender step 4; price and
- * payment frequency step 5; an open intake starting today or later step 6;
- * entry requirements step 8). Step 7 (included services) has nothing
- * required: it is done once saved. Preview is done once seen; Submit once
- * the listing has left draft (or a rejection).
+ * from the step the user is on). The fields are the backend's submit check
+ * (week 1 part 2, section 12), each counted on the step of THIS editor that
+ * collects it: the one-line summary (description) is in step 1 and the
+ * program length (duration) in step 6, as in the prototype, although the
+ * backend's missing list numbers them step 3.
+ *   1 title, description      2 an image        3 type, level, training frequency
+ *   4 ages and gender          5 price and payment frequency
+ *   6 duration and an open intake starting today or later
+ *   7 nothing required: done once saved      8 entry requirements
+ *   9 done once seen          10 done once the listing left draft or rejection
  */
 export function stepsDone(
   l: ApiListing | null,
@@ -139,17 +142,14 @@ export function stepsDone(
     v !== null && v !== undefined && String(v).trim() !== ""
   if (!l) return Array.from({ length: 10 }, () => false)
   return [
-    has(l.title),
+    has(l.title) && has(l.description),
     l.images.length > 0,
-    has(l.description) &&
-      has(l.academy_type) &&
-      has(l.playing_level) &&
-      has(l.training_frequency) &&
-      has(l.duration_value) &&
-      has(l.duration_unit),
+    has(l.academy_type) && has(l.playing_level) && has(l.training_frequency),
     has(l.age_min) && has(l.age_max) && has(l.gender),
     l.price !== null && has(l.payment_frequency),
-    l.intakes.some((i) => i.status === "open" && i.start_date >= today),
+    has(l.duration_value) &&
+      has(l.duration_unit) &&
+      l.intakes.some((i) => i.status === "open" && i.start_date >= today),
     progress.saved.includes(6),
     has(l.requirements),
     progress.saved.includes(8),
@@ -191,4 +191,34 @@ export function resumeStep(done: boolean[], progress: EditorProgress): number {
   if (progress.last >= 0 && progress.last <= 9) return progress.last
   const firstOpen = done.findIndex((x, i) => !x && i <= 7)
   return firstOpen === -1 ? 8 : firstOpen
+}
+
+/**
+ * Whether a step holds changes not saved yet: what the step would send now
+ * differs from what it would send from the saved listing (photos and start
+ * dates: anything to upload, remove, create or update). Preview and Submit
+ * hold nothing to save.
+ */
+export function stepDirty(
+  step: number,
+  d: LiveDraft,
+  saved: ApiListing | null,
+  options: ApiOptions,
+  today: string
+): boolean {
+  if (step >= 8) return false
+  if (!saved) return step === 0 ? d.title.trim() !== "" : false
+  if (step === 1) {
+    const c = imageChanges(d)
+    return c.upload.length > 0 || c.deleteIds.length > 0
+  }
+  if (step === 5) {
+    const c = intakeChanges(d, today)
+    if (c.create.length || c.update.length || c.remove.length) return true
+  }
+  const base = draftFromApi(saved, options)
+  return (
+    JSON.stringify(stepPayload(step, d)) !==
+    JSON.stringify(stepPayload(step, base))
+  )
 }

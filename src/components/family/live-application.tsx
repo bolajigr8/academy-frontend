@@ -37,6 +37,7 @@ import { FAMILY } from "@/data/family-copy"
 import { LIVE } from "@/data/live-copy"
 import type { AppEvent } from "@/features/applications/types"
 import {
+  attachProfileFile,
   cancelApplication,
   changeIntake,
   deleteDocument,
@@ -49,6 +50,7 @@ import {
   submitApplication,
   uploadDocument,
   type ApiApplication,
+  PROFILE_FILE_FOR_DOC,
   type ApiAppDocument,
   type ApiAppQuestion,
   type ApiMissingForSubmission,
@@ -574,6 +576,20 @@ function DocumentsCard({
       </label>
     )
   }
+  // a paper the player's profile already holds can be reused in one tap
+  const profileFile = (type: string) => {
+    const field = PROFILE_FILE_FOR_DOC[type]
+    const f = field ? a.player?.files?.[field] : undefined
+    return f?.uploaded && f.download_url ? f.download_url : null
+  }
+  const fromProfile = (type: string, url: string) => {
+    setUploading(`profile-${type}`)
+    return run(
+      () => attachProfileFile(a.id, type, url),
+      LIVE.players.fromProfileDone
+    ).finally(() => setUploading(null))
+  }
+  const playerFirst = a.player?.first_name ?? ""
   return (
     <CardBlock aria-labelledby="h-docs">
       <SectionHead id="h-docs" title={t.documents} />
@@ -587,7 +603,26 @@ function DocumentsCard({
                 icon="doc"
                 title={docLabel(type)}
                 sub={LIVE.players.notUploaded}
-                trailing={editable ? picker(type, t.upload) : undefined}
+                trailing={
+                  editable ? (
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      {profileFile(type) ? (
+                        <Button
+                          size="sm"
+                          disabled={busy}
+                          aria-busy={uploading === `profile-${type}`}
+                          onClick={() =>
+                            fromProfile(type, profileFile(type) ?? "")
+                          }
+                        >
+                          <Icon name="user" size={14} />{" "}
+                          {LIVE.players.fromProfile(playerFirst)}
+                        </Button>
+                      ) : null}
+                      {picker(type, t.upload)}
+                    </span>
+                  ) : undefined
+                }
               />
             )
           return docs.map((d) => (

@@ -226,11 +226,14 @@ export function validateAcademy(d: AcademyDraft): Record<string, string> {
 }
 
 /**
- * The multipart body for create / update. Text fields are always sent (the
- * form shows them all); files only when picked; lists as indexed fields
- * (facilities[0], …) which the contract accepts.
+ * The multipart bodies for create / update, sent one after the other: the
+ * text fields (and removals) first, then the logo, the cover and each new
+ * gallery image in a request of its own. A server drops an upload above its
+ * size limit without an error, so one large request could silently lose
+ * every image (the backend then shows its default). Text fields are always
+ * sent; lists as indexed fields (facilities[0], …), which the contract accepts.
  */
-export function academyForm(d: AcademyDraft, countryName: string): FormData {
+export function academyForms(d: AcademyDraft, countryName: string): FormData[] {
   const f = new FormData()
   f.append("name", d.name.trim())
   f.append("description", d.description.trim())
@@ -245,18 +248,27 @@ export function academyForm(d: AcademyDraft, countryName: string): FormData {
   if (facilities.length === 0) f.append("facilities", "[]")
   facilities.forEach((x, i) => f.append(`facilities[${i}]`, x))
   f.append("policies", d.policies.trim())
-  if (d.logo) f.append("logo", d.logo.file)
-  if (d.cover) f.append("header_image", d.cover.file)
-  let n = -1
-  d.gallery.forEach((g, i) => {
-    if (g.kind !== "new") return
-    n += 1
-    f.append(`images[${n}][file]`, g.file)
-    f.append(`images[${n}][sort_order]`, String(i))
-    f.append(`images[${n}][is_primary]`, i === 0 ? "1" : "0")
-  })
   d.removedImageIds.forEach((imageId, i) =>
     f.append(`delete_image_ids[${i}]`, String(imageId))
   )
-  return f
+  const forms = [f]
+  if (d.logo) {
+    const logo = new FormData()
+    logo.append("logo", d.logo.file)
+    forms.push(logo)
+  }
+  if (d.cover) {
+    const cover = new FormData()
+    cover.append("header_image", d.cover.file)
+    forms.push(cover)
+  }
+  d.gallery.forEach((g, i) => {
+    if (g.kind !== "new") return
+    const img = new FormData()
+    img.append("images[0][file]", g.file)
+    img.append("images[0][sort_order]", String(i))
+    img.append("images[0][is_primary]", i === 0 ? "1" : "0")
+    forms.push(img)
+  })
+  return forms
 }

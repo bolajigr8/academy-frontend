@@ -110,6 +110,20 @@ const docTypeLabel = (type: string) =>
   LIVE.verificationDocs.types[type] ??
   type.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())
 
+/** The row's way in: "Review" (highlighted) while a decision waits, else "Open" */
+function RowAction({ href, waiting }: { href: string; waiting: boolean }) {
+  return (
+    <ButtonLink
+      href={href}
+      variant={waiting ? "primary" : "secondary"}
+      size="sm"
+      className="whitespace-nowrap"
+    >
+      {waiting ? C.review : C.open} <Icon name="arrow" size={14} />
+    </ButtonLink>
+  )
+}
+
 export function StatusTag({ status }: { status: string }) {
   return (
     <StatusPill tone={TONE[status] ?? "ghost"}>
@@ -672,6 +686,9 @@ export function AdminVerificationsClient() {
                 <TableHead>{t.city}</TableHead>
                 <TableHead>{t.status}</TableHead>
                 <TableHead>{t.lastDecision}</TableHead>
+                <TableHead>
+                  <span className="am-sr">{C.actions}</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -694,6 +711,12 @@ export function AdminVerificationsClient() {
                     {v.verification_reviewed_at
                       ? `${date(v.verification_reviewed_at)}${v.verification_reviewed_by ? ` ${C.by} ${v.verification_reviewed_by.name}` : ""}`
                       : C.none}
+                  </TableCell>
+                  <TableCell>
+                    <RowAction
+                      href={routes.admin.verification(v.academy_id)}
+                      waiting={v.verification_status === "pending"}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -947,6 +970,9 @@ export function AdminListingsClient() {
                 <TableHead>{t.price}</TableHead>
                 <TableHead>{t.submitted}</TableHead>
                 <TableHead>{t.status}</TableHead>
+                <TableHead>
+                  <span className="am-sr">{C.actions}</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -970,6 +996,12 @@ export function AdminListingsClient() {
                   <TableCell>{date(l.submitted_at)}</TableCell>
                   <TableCell>
                     <StatusTag status={l.status} />
+                  </TableCell>
+                  <TableCell>
+                    <RowAction
+                      href={routes.admin.listing(l.id)}
+                      waiting={l.status === "pending_review"}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

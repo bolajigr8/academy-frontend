@@ -337,7 +337,8 @@ export function stepPayload(step: number, d: LiveDraft): ListingUpdate {
       }
     case 6:
       return {
-        included: d.included,
+        // the list never contradicts the yes/no answers (they drive search)
+        included: syncIncluded(d.included, d.hasAccommodation, d.hasEducation),
         has_accommodation: d.hasAccommodation,
         has_education: d.hasEducation,
       }
@@ -538,9 +539,35 @@ const FIELD_STEP: Record<string, number> = {
   terms: 7,
 }
 
+/*
+ * Included services (week 1 part 1, section 6): `included` is a free list of
+ * text while has_accommodation / has_education are true or false, and only
+ * the booleans drive search filters and cards. So the two prototype chips
+ * that mean the same thing follow the booleans: ticking a chip turns its
+ * answer to "included"; answering "not offered" removes the chip.
+ */
+export const ACCOMMODATION_LABEL = INCLUDES.accommodation.label
+export const EDUCATION_LABEL = INCLUDES.education.label
+
+/** The list as it should be for these yes/no answers */
+export function syncIncluded(
+  included: string[],
+  hasAccommodation: boolean,
+  hasEducation: boolean
+): string[] {
+  const rest = included.filter(
+    (x) => x !== ACCOMMODATION_LABEL && x !== EDUCATION_LABEL
+  )
+  return [
+    ...rest,
+    ...(hasAccommodation ? [ACCOMMODATION_LABEL] : []),
+    ...(hasEducation ? [EDUCATION_LABEL] : []),
+  ]
+}
+
 export function stepForField(field: string, backendStep: number): number {
   return FIELD_STEP[field] ?? Math.max(0, Math.min(9, backendStep - 1))
 }
 
-/** File types the backend accepts for gallery images */
-export const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"]
+/** File types the backend accepts for gallery images (lib/images.ts) */
+export { IMAGE_TYPES } from "@/lib/images"

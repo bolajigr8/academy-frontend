@@ -107,25 +107,66 @@ export async function deletePlayer(id: number): Promise<void> {
  * A private file (download_url needs the bearer token, so a plain link would
  * get 401): fetched as a blob and saved under the name the server gives.
  */
-export async function downloadPrivateFile(
+/**
+ * Fetches a private file with the token (a plain link cannot carry it) and
+ * returns it as a File, under the name the backend gives it.
+ */
+export async function fetchPrivateFile(
   url: string,
   fallbackName: string
-): Promise<void> {
+): Promise<File> {
   const res = await apiClient.get<Blob>(resolveBackendUrl(url), {
     responseType: "blob",
   })
   const disposition = String(res.headers["content-disposition"] ?? "")
-  const name =
+  const name = decodeURIComponent(
     /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)?.[1] ??
-    fallbackName
-  const href = URL.createObjectURL(res.data)
+      fallbackName
+  )
+  return new File([res.data], name, {
+    type: res.data.type || "application/octet-stream",
+  })
+}
+
+/** Downloads a private file to the user's computer */
+export async function downloadPrivateFile(
+  url: string,
+  fallbackName: string
+): Promise<void> {
+  const file = await fetchPrivateFile(url, fallbackName)
+  const href = URL.createObjectURL(file)
   const a = document.createElement("a")
   a.href = href
-  a.download = decodeURIComponent(name)
+  a.download = file.name
   document.body.appendChild(a)
   a.click()
   a.remove()
   setTimeout(() => URL.revokeObjectURL(href), 1000)
+}
+
+/**
+ * A player profile keeps three private files (part 1, section 3); a listing
+ * asks for documents by type (section 6). The same paper under both names:
+ */
+export const PROFILE_FILE_FOR_DOC: Record<string, PlayerFileField> = {
+  passport: "passport_document",
+  medical_certificate: "medical_certificate",
+  player_cv: "player_cv",
+}
+
+/**
+ * Uses a file the player's profile already holds as an application document:
+ * fetched with the token, then uploaded with the document's type (the
+ * contract has no "attach from profile" call, so this is the same two
+ * requests the family would make by hand).
+ */
+export async function attachProfileFile(
+  applicationId: number,
+  type: string,
+  downloadUrl: string
+): Promise<ApiApplication> {
+  const file = await fetchPrivateFile(downloadUrl, `${type}.pdf`)
+  return uploadDocument(applicationId, type, file)
 }
 
 /* ---------------- applications (week 2 part 1 sections 5 to 8; part 2 section 13) ---------------- */

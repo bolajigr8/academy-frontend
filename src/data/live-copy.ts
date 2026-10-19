@@ -35,6 +35,12 @@ export const LIVE = {
     choiceOptions: "A choice question needs 2 to 20 options",
     questionText: "Write the question",
     imageType: "Photos must be JPEG, PNG or WebP",
+    /** the size limit (lib/images.ts MAX_IMAGE_BYTES) */
+    imageTooBig: (name: string, size: string) =>
+      `${name} is ${size}. Photos must be 600 KB or smaller: compress or resize it, then add it again.`,
+    imagesTooBig: (n: number) =>
+      `${n} photos are larger than 600 KB and were not added. Compress or resize them, then add them again.`,
+    imageLimitHint: "JPEG, PNG or WebP, up to 600 KB each.",
     trainingFrequency: "Say how often the players train",
     requirements: "Add at least one entry requirement",
   },
@@ -57,6 +63,10 @@ export const LIVE = {
     optionalHint:
       "Extras families can add, such as an airport transfer or private coaching. Golafly lists them as text and does not add them to the fee: if an extra costs more, write its price in the text, for example “Airport transfer (€80 each way)”.",
     addOptional: "Add a service",
+    saveOnly: "Save",
+    saved: "Changes saved.",
+    includedSync:
+      "The Accommodation and Schooling chips always match the two answers just above, which families can filter search by.",
     days: {
       monday: "Monday",
       tuesday: "Tuesday",
@@ -195,6 +205,15 @@ export const LIVE = {
       "Add a profile for yourself or for each child you apply for. You fill it in once and reuse it for every application.",
     neededLead: "Needed before applying:",
     readyNote: "Complete: ready to use in applications.",
+    /** is_complete counts only options.required_fields (contract part 1, §2-3): documents are per application */
+    /** reuse a profile file as an application document (same paper, two names) */
+    fromProfile: (first: string) =>
+      first
+        ? `Use the one from ${first}’s profile`
+        : "Use the one from the profile",
+    fromProfileDone: "Document added from the player’s profile.",
+    docsNote:
+      "Each program asks for its own documents; a passport, medical certificate or CV saved here can be added to an application in one tap.",
     save: "Save profile",
     created: "Player profile created.",
     saved: "Player profile saved.",

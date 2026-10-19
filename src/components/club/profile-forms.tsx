@@ -15,7 +15,7 @@ import {
 import { FieldError, FormField } from "@/components/shared/form-field"
 import { FormRow } from "@/components/shared/form-row"
 import { NativeSelect } from "@/components/shared/native-select"
-import { notify, notifyError } from "@/components/shared/notify"
+import { notify } from "@/components/shared/notify"
 import { SafeImage } from "@/components/shared/safe-image"
 import { SectionHead } from "@/components/shared/section-head"
 import { Button } from "@/components/ui/button"
@@ -30,10 +30,11 @@ import {
   type ApiAcademy,
   type ApiOrganization,
 } from "@/features/club/api"
+import { pickImages } from "@/components/shared/pick-images"
 import { IMAGE_TYPES } from "@/features/club/live-draft"
 import {
   academyDraftFrom,
-  academyForm,
+  academyForms,
   ACADEMY_FIELDS,
   ACADEMY_IDS,
   emptyAcademy,
@@ -263,13 +264,9 @@ export function OrganizationForm({
 
 /* ---------------- file pickers ---------------- */
 
-/** Only JPEG, PNG and WebP (contract section 1); anything else is refused with a message */
-const pick = (files: FileList | null): PickedFile[] => {
-  const all = Array.from(files ?? [])
-  const ok = all.filter((file) => IMAGE_TYPES.includes(file.type))
-  if (ok.length < all.length) notifyError(LIVE.editor.imageType)
-  return ok.map((file) => ({ file, url: URL.createObjectURL(file) }))
-}
+/** JPEG, PNG and WebP up to 600 KB (lib/images.ts); refused files are named in a toast */
+const pick = (files: FileList | null): PickedFile[] =>
+  pickImages(files).map((file) => ({ file, url: URL.createObjectURL(file) }))
 
 /** One image (logo or cover): preview + a native file input behind a button-like label */
 function SingleImageField({
@@ -352,7 +349,9 @@ function GalleryField({
   return (
     <div className="grid gap-1.5">
       <p className="text-fs-14 font-semibold text-fg-1">{f.gallery}</p>
-      <p className="text-fs-13 text-fg-3">{f.galleryHint}</p>
+      <p className="text-fs-13 text-fg-3">
+        {f.galleryHint} {LIVE.editor.imageLimitHint}
+      </p>
       <div
         id={ACADEMY_IDS.gallery}
         tabIndex={-1}
@@ -446,11 +445,13 @@ export function AcademyForm({
       countries.find((c) => c.code === d.countryCode)?.name ?? d.countryCode
     setBusy(true)
     try {
-      const body = academyForm(d, countryName)
-      const saved =
+      // the fields first (create or update), then each image on its own
+      const [fields, ...images] = academyForms(d, countryName)
+      let saved =
         d.id === null
-          ? await createAcademy(body)
-          : await updateAcademy(d.id, body)
+          ? await createAcademy(fields)
+          : await updateAcademy(d.id, fields)
+      for (const image of images) saved = await updateAcademy(saved.id, image)
       // the single academy first: the form reads it as soon as the list names it
       queryClient.setQueryData(clubKeys.academy(saved.id), saved)
       queryClient.setQueryData<ApiAcademy[]>(clubKeys.academies(), (list) =>

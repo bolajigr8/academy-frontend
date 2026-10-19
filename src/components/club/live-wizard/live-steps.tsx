@@ -15,7 +15,7 @@ import { ListingCard } from "@/components/shared/listing-card"
 import { Meter } from "@/components/shared/meter"
 import { NativeSelect } from "@/components/shared/native-select"
 import { Notice } from "@/components/shared/notice"
-import { notifyError } from "@/components/shared/notify"
+import { pickImages } from "@/components/shared/pick-images"
 import { SafeImage } from "@/components/shared/safe-image"
 import { StatusPill } from "@/components/shared/status-pill"
 import { VerifyBadge } from "@/components/shared/verify-badge"
@@ -42,7 +42,10 @@ import {
   documentLabel,
   draftChecklist,
   IMAGE_TYPES,
+  ACCOMMODATION_LABEL,
+  EDUCATION_LABEL,
   INCLUDE_LABELS,
+  syncIncluded,
   stepForField,
   newKey,
   type DraftQuestion,
@@ -206,9 +209,8 @@ export function LiveStepImages({ d, set, errors }: LiveStepProps) {
   const input = useRef<HTMLInputElement>(null)
   const add = (files: FileList | null) => {
     if (!files) return
-    const picked = Array.from(files)
-    const ok = picked.filter((f) => IMAGE_TYPES.includes(f.type))
-    if (ok.length < picked.length) notifyError(LIVE.editor.imageType)
+    // JPEG, PNG or WebP up to 600 KB each; refused files are named in a toast
+    const ok = pickImages(files)
     const room = Math.max(0, 5 - d.images.length)
     set({
       images: d.images.concat(
@@ -236,6 +238,7 @@ export function LiveStepImages({ d, set, errors }: LiveStepProps) {
   return (
     <>
       <p className="text-fs-16 leading-lh-relaxed text-fg-2">{t.intro}</p>
+      <p className="text-fs-13 text-fg-3">{LIVE.editor.imageLimitHint}</p>
       <div
         id="amk-w-photos"
         tabIndex={-1}
@@ -408,16 +411,17 @@ export function LiveStepAges({ d, set, errors }: LiveStepProps) {
   const t = EDITOR.ages
   return (
     <>
+      {/* the range error belongs to both ages: it sits under the row, so the
+          two columns stay aligned, and both selects point to it */}
       <FormRow id="amk-w-ages" tabIndex={-1}>
-        <FormField
-          id="amk-w-agemin"
-          label={t.min}
-          required
-          error={errors["amk-w-ages"]}
-        >
+        <FormField id="amk-w-agemin" label={t.min} required>
           {(p) => (
             <NativeSelect
               {...p}
+              aria-invalid={errors["amk-w-ages"] ? true : undefined}
+              aria-describedby={
+                errors["amk-w-ages"] ? "amk-w-ages-err" : p["aria-describedby"]
+              }
               value={d.ageMin}
               onChange={(e) => set({ ageMin: e.target.value })}
             >
@@ -431,6 +435,10 @@ export function LiveStepAges({ d, set, errors }: LiveStepProps) {
           {(p) => (
             <NativeSelect
               {...p}
+              aria-invalid={errors["amk-w-ages"] ? true : undefined}
+              aria-describedby={
+                errors["amk-w-ages"] ? "amk-w-ages-err" : p["aria-describedby"]
+              }
               value={d.ageMax}
               onChange={(e) => set({ ageMax: e.target.value })}
             >
@@ -441,6 +449,9 @@ export function LiveStepAges({ d, set, errors }: LiveStepProps) {
           )}
         </FormField>
       </FormRow>
+      {errors["amk-w-ages"] ? (
+        <FieldError id="amk-w-ages-err">{errors["amk-w-ages"]}</FieldError>
+      ) : null}
       <p className="text-fs-13 text-fg-3">{t.hint}</p>
     </>
   )
@@ -711,18 +722,30 @@ export function LiveStepIncluded({ d, set }: LiveStepProps) {
         </legend>
         <CheckGrid
           options={choices.map((label) => ({ value: label, label }))}
-          value={d.included}
-          onChange={(included) => set({ included })}
+          // the two chips with a yes/no answer below always show that answer
+          value={syncIncluded(d.included, d.hasAccommodation, d.hasEducation)}
+          onChange={(included) => {
+            const acc = included.includes(ACCOMMODATION_LABEL)
+            const edu = included.includes(EDUCATION_LABEL)
+            set({ included, hasAccommodation: acc, hasEducation: edu })
+          }}
         />
       </fieldset>
       <FormRow>
         {yesNo("amk-w-acc", t.accommodation, d.hasAccommodation, (v) =>
-          set({ hasAccommodation: v })
+          set({
+            hasAccommodation: v,
+            included: syncIncluded(d.included, v, d.hasEducation),
+          })
         )}
         {yesNo("amk-w-edu", t.education, d.hasEducation, (v) =>
-          set({ hasEducation: v })
+          set({
+            hasEducation: v,
+            included: syncIncluded(d.included, d.hasAccommodation, v),
+          })
         )}
       </FormRow>
+      <p className="text-fs-13 text-fg-3">{ui.includedSync}</p>
     </>
   )
 }

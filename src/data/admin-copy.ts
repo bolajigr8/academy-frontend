@@ -28,6 +28,8 @@ export const ADMIN = {
   },
   common: {
     all: "All",
+    actions: "Actions",
+    review: "Review",
     search: "Search",
     prev: "Previous",
     next: "Next",
@@ -73,8 +75,10 @@ export const ADMIN = {
     byStatus: "Applications by status",
     byStatusSub: (n: number | string) => `${n} sent · tap a status to see them`,
     attention: "Needs your attention",
-    verifyLead: "Waiting for Golafly’s offline check",
-    listingsLead: "Submitted by academies, waiting for review",
+    verifyLead:
+      "Is the academy itself real? Check it offline, then approve it (Golafly Verified or Club Academy) or reject it with a note.",
+    listingsLead:
+      "Is a program ready to show families? Approve it, or reject it with what to change. A listing appears in search once both it and its academy are approved.",
     reviewVerifications: "Review verifications",
     reviewListings: "Review listings",
     nothing: "Nothing waiting.",

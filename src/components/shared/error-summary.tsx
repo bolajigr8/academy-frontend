@@ -9,31 +9,38 @@ export type ErrorSummaryHandle = { focus: () => void }
 
 type Props = {
   errors: Record<string, string>
+  /** kept for the forms that pass it; the toast now shows the message itself */
   labels?: Record<string, string>
   ref?: Ref<ErrorSummaryHandle>
 }
 
-const title = (count: number) =>
-  count === 1 ? "There is 1 thing to fix" : `There are ${count} things to fix`
-
 /*
  * AmErrorSummary (js/amk-core.jsx, css/amk-core.css:177-182).
  * Change requested by the team (Oct 2026): the red summary box is no longer
- * shown. A failed submit now raises an error toast (top-right) with the same
- * title ("There are 2 things to fix") and the first problem as its text, and
- * moves focus to the first field to fix. Each field keeps its own message.
+ * shown. A failed submit raises an error toast (top-right) that leads with
+ * the first problem itself ("Give the program a name"), adds "and N more to
+ * fix" when there are several, and moves focus to the first field to fix.
+ * Each field keeps its own message.
  *
  * Forms with a ref call ref.focus() after every failed submit (so pressing
  * Save again repeats the toast). A form without a ref gets the toast when its
  * set of errors changes.
  */
-export function ErrorSummary({ errors, labels, ref }: Props) {
+export function ErrorSummary({ errors, ref }: Props) {
   const announce = () => {
     const keys = Object.keys(errors)
     const first = keys[0]
     if (first === undefined) return
-    const label = labels?.[first]
-    notifyError(title(keys.length), (label ? `${label}: ` : "") + errors[first])
+    // the toast leads with the actual problem; more than one adds a count
+    const rest = keys.length - 1
+    notifyError(
+      errors[first],
+      rest > 0
+        ? rest === 1
+          ? "and 1 more to fix"
+          : `and ${rest} more to fix`
+        : undefined
+    )
     const el =
       document.getElementById(first) ??
       document.getElementById(`${first}-first`)

@@ -58,6 +58,12 @@ export function SafeImage({
       {...props}
       // backend images: an absolute 127.0.0.1 URL is moved onto the API origin
       src={src !== null ? resolveBackendUrl(src) : props.src}
+      // a full http(s) address is a backend upload (or a blob preview): shown
+      // as it is, so no image host has to be listed in next.config (Vercel)
+      unoptimized={
+        props.unoptimized ??
+        (src !== null && /^(https?:|blob:|data:)/.test(src))
+      }
       alt={alt}
       className={className}
       onError={() => {

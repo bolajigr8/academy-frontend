@@ -47,6 +47,7 @@ import {
   readProgress,
   resumeStep,
   saveStep,
+  stepDirty,
   stepsDone,
   writeProgress,
   type EditorProgress,
@@ -323,9 +324,36 @@ function Editor({
     }
     if (await save(step)) moveTo(Math.min(step + 1, 9))
   }
-  const goTo = (i: number) => {
+  /**
+   * Leaving a step by the step list or Back saves it first when it holds
+   * unsaved changes (an invalid step stays open with its errors); a step
+   * without changes is left at once.
+   */
+  const saveIfChanged = async (): Promise<boolean> => {
+    if (!stepDirty(step, d, saved, options, today)) return true
+    const e = validateDraft(step, d)
+    setErrors(e)
+    if (Object.keys(e).length) {
+      requestAnimationFrame(() => sumRef.current?.focus())
+      return false
+    }
+    return save(step)
+  }
+  const goTo = async (i: number) => {
+    if (i === step) return
+    if (!(await saveIfChanged())) return
     setErrors({})
     moveTo(i)
+  }
+  /** "Save": this step only, staying on it */
+  const saveHere = async () => {
+    const e = validateDraft(step, d)
+    setErrors(e)
+    if (Object.keys(e).length) {
+      requestAnimationFrame(() => sumRef.current?.focus())
+      return
+    }
+    if (await save(step)) notify(LIVE.editorUi.saved)
   }
   /** POST /academy/portal/listings/{id}/submit; a 422 lists what is missing */
   const submit = async () => {
@@ -362,7 +390,8 @@ function Editor({
       router.push(routes.club.listings)
       return
     }
-    if (step >= 8 || (await save(step))) router.push(routes.club.listings)
+    // only a step with unsaved changes is saved (and checked) on the way out
+    if (await saveIfChanged()) router.push(routes.club.listings)
   }
 
   const monthOpts = Array.from({ length: 14 }, (_, k) =>
@@ -572,10 +601,31 @@ function Editor({
               <span />
             )}
             {step < 9 ? (
-              <Button type="submit" disabled={saving} aria-busy={saving}>
-                {saving ? LIVE.editorUi.saving : EDITOR.saveContinue}{" "}
-                <Icon name="arrow" size={16} />
-              </Button>
+              <div className="flex flex-wrap justify-end gap-2">
+                {/* save without walking through every later step */}
+                {step < 8 ? (
+                  <Button
+                    variant="ghost"
+                    disabled={saving}
+                    onClick={() => exit()}
+                  >
+                    {EDITOR.saveAndExit}
+                  </Button>
+                ) : null}
+                {step < 8 && d.id !== null ? (
+                  <Button
+                    variant="secondary"
+                    disabled={saving}
+                    onClick={() => saveHere()}
+                  >
+                    {LIVE.editorUi.saveOnly}
+                  </Button>
+                ) : null}
+                <Button type="submit" disabled={saving} aria-busy={saving}>
+                  {saving ? LIVE.editorUi.saving : EDITOR.saveContinue}{" "}
+                  <Icon name="arrow" size={16} />
+                </Button>
+              </div>
             ) : null}
           </div>
         </form>

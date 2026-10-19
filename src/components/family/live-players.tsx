@@ -24,6 +24,7 @@ import { Modal } from "@/components/shared/modal"
 import { NativeSelect } from "@/components/shared/native-select"
 import { Notice } from "@/components/shared/notice"
 import { notify, notifyError } from "@/components/shared/notify"
+import { pickImages } from "@/components/shared/pick-images"
 import { Grid2, Stack } from "@/components/shared/page-grid"
 import { ProfileHero } from "@/components/shared/profile-hero"
 import { QueryState } from "@/components/shared/query-state"
@@ -281,7 +282,7 @@ function PlayerProfile({
       ) : null}
       {p.is_complete ? (
         <Notice tone="success" icon="checkcircle">
-          {L.readyNote}
+          {L.readyNote} {L.docsNote}
         </Notice>
       ) : (
         <Notice tone="warning" icon="alert">
@@ -595,6 +596,11 @@ export function PlayerDialog({
                   : ["application/pdf", "image/jpeg", "image/png"]
                 if (file && !allowed.includes(file.type)) {
                   notifyError(LIVE.players.fileType(isPhoto))
+                  e.target.value = ""
+                  return
+                }
+                // the profile photo follows the same 600 KB rule as every image
+                if (isPhoto && file && pickImages([file]).length === 0) {
                   e.target.value = ""
                   return
                 }
