@@ -8,7 +8,7 @@ import { h4 } from "@/components/program/program-blocks"
 import { CheckField } from "@/components/shared/check-field"
 import { CheckGrid } from "@/components/shared/check-grid"
 import { CheckList } from "@/components/shared/check-list"
-import { ClubCrest } from "@/components/shared/club-crest"
+import { AcademyLogo } from "@/components/shared/academy-logo"
 import { FieldError, FormField } from "@/components/shared/form-field"
 import { FormRow } from "@/components/shared/form-row"
 import { ListingCard } from "@/components/shared/listing-card"
@@ -34,7 +34,6 @@ import { EDITOR } from "@/data/editor-copy"
 import { LIVE } from "@/data/live-copy"
 import type { DocTypeId } from "@/data/types"
 import { valueLabel, type CardView } from "@/features/academies/card-view"
-import { crestFor } from "@/features/academies/search"
 import type { ApiAcademy, ApiOptions } from "@/features/club/api"
 import {
   DAYS,
@@ -146,8 +145,10 @@ export function LiveStepAbout({
       ) : null}
       {academy ? (
         <div className="flex items-start gap-[14px] rounded-md border border-border-1 bg-bg-2 p-[18px]">
-          <ClubCrest
-            crest={crestFor({ id: String(academy.id), name: academy.name })}
+          <AcademyLogo
+            id={academy.id}
+            name={academy.name}
+            logoUrl={academy.logo_url}
             size={44}
           />
           <div>

@@ -701,7 +701,7 @@ export function AdminCommissionClient() {
         )}
         <div className="grid gap-3 border-t border-border-1 pt-4">
           <b className="text-fs-14">{t.add}</b>
-          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto] items-start gap-3 le-720:grid-cols-[minmax(0,1fr)]">
+          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto] items-end gap-3 le-720:grid-cols-[minmax(0,1fr)]">
             <FormField id="com-org" label={t.organization} required>
               {(p) => (
                 <NativeSelect
@@ -718,7 +718,7 @@ export function AdminCommissionClient() {
                 </NativeSelect>
               )}
             </FormField>
-            <FormField id="com-rate" label={t.rate} hint={t.rateHint} required>
+            <FormField id="com-rate" label={t.rate} required>
               {(p) => (
                 <Input
                   {...p}
@@ -729,7 +729,7 @@ export function AdminCommissionClient() {
               )}
             </FormField>
             <Button
-              className="mt-7 le-720:mt-0 le-720:justify-self-start"
+              className="min-h-[52px] le-720:justify-self-start"
               disabled={!orgId}
               onClick={() => {
                 if (!validRate(rate)) return setError(t.rateError)
@@ -740,6 +740,8 @@ export function AdminCommissionClient() {
               {t.save}
             </Button>
           </div>
+          {/* one hint for the row, so the two fields and the button line up */}
+          <p className="text-fs-13 text-fg-3">{t.rateHint}</p>
           {error ? <FieldError id="com-rate-err">{error}</FieldError> : null}
         </div>
       </CardBlock>

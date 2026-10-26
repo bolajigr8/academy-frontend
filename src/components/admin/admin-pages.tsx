@@ -7,6 +7,7 @@ import { useEffect, useState, type ReactNode } from "react"
 
 import { PasswordInput } from "@/components/auth/password-input"
 import { Icon } from "@/components/icons/icon"
+import { BarChart } from "@/components/shared/bar-chart"
 import { CardBlock } from "@/components/shared/card-block"
 import { CheckField } from "@/components/shared/check-field"
 import { DocItem, DocList } from "@/components/shared/doc-list"
@@ -699,7 +700,7 @@ function MarketplaceNumbers({
     })
   const v = (x: number | string | undefined) => (x === undefined ? "…" : x)
   return (
-    <section aria-labelledby="h-market" className="grid gap-3">
+    <section aria-labelledby="h-market" className="grid gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2
           id="h-market"
@@ -778,6 +779,27 @@ function MarketplaceNumbers({
               sub={m.revenueSub}
             />
           </div>
+          {p ? (
+            <CardBlock aria-labelledby="h-activity" className="grid gap-4">
+              <SectionHead
+                id="h-activity"
+                title={m.activity}
+                sub={m.activitySub}
+              />
+              <BarChart
+                label={m.activity}
+                highlight={m.applications}
+                rows={[
+                  { label: m.searches, value: p.searches },
+                  { label: m.views, value: p.listing_views },
+                  { label: m.applications, value: p.applications_submitted },
+                  { label: m.newAccounts, value: p.new_players_and_parents },
+                  { label: m.saved, value: p.saved_listings_added },
+                  { label: m.reviews, value: p.verified_reviews_added },
+                ]}
+              />
+            </CardBlock>
+          ) : null}
           {p && p.revenue.unconverted.length ? (
             <p className="text-fs-13 text-fg-3">
               {m.unconverted(
@@ -790,7 +812,7 @@ function MarketplaceNumbers({
               )}
             </p>
           ) : null}
-          <h3 className="font-mono text-fs-12 tracking-gf-wide text-fg-3 uppercase">
+          <h3 className="mt-[clamp(10px,1.6vw,18px)] font-mono text-fs-12 tracking-gf-wide text-fg-3 uppercase">
             {m.now}
           </h3>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(180px,100%),1fr))] gap-4">

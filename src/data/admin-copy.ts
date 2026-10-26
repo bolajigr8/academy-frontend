@@ -322,6 +322,8 @@ export const ADMIN = {
     revenueSub: "in euros, from payments made",
     unconverted: (list: string) => `Not converted (no rate): ${list}`,
     now: "Right now",
+    activity: "Marketplace activity",
+    activitySub: "What families did in the period, from searching to reviewing",
     verifiedAcademies: "Verified academies",
     activeListings: "Active listings",
     accounts: "Players and parents",

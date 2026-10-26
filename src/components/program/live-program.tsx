@@ -9,7 +9,7 @@ import { DefList, h4 } from "@/components/program/program-blocks"
 import { ListingReviews } from "@/components/reviews/listing-reviews"
 import { useLiveSaved } from "@/components/search/use-live-saved"
 import { CheckList } from "@/components/shared/check-list"
-import { ClubCrest } from "@/components/shared/club-crest"
+import { AcademyLogo } from "@/components/shared/academy-logo"
 import { Kv, KvLines } from "@/components/shared/key-value"
 import { SafeImage } from "@/components/shared/safe-image"
 import { VerifyBadge } from "@/components/shared/verify-badge"
@@ -20,7 +20,7 @@ import { LIVE } from "@/data/live-copy"
 import { PROGRAM } from "@/data/search-copy"
 import type { ApiPublicListing } from "@/features/academies/api"
 import { apiDurationLabel, valueLabel } from "@/features/academies/card-view"
-import { crestFor, placesLabel } from "@/features/academies/search"
+import { placesLabel } from "@/features/academies/search"
 import { apiFeeUnit } from "@/features/club/view-models"
 import { documentLabel } from "@/features/club/live-draft"
 import { formatMoney } from "@/lib/money"
@@ -38,7 +38,9 @@ const dsec =
 const dsecH = "font-display text-fs-24 font-bold tracking-[-0.015em] uppercase"
 const twocol =
   "grid grid-cols-[1fr_1fr] gap-6 le-720:grid-cols-[1fr] [&>div]:grid [&>div]:content-start [&>div]:gap-2"
-const body = "text-fs-16 leading-lh-relaxed text-fg-2"
+// a readable line length; long words wrap; the academy's own line breaks kept
+const body =
+  "max-w-[70ch] text-fs-16 leading-lh-relaxed text-fg-2 whitespace-pre-line [overflow-wrap:anywhere]"
 const DAY_ORDER = [
   "monday",
   "tuesday",
@@ -83,8 +85,10 @@ export function LiveProgram({
     <div className="am-container pt-6 pb-16">
       <header className="grid gap-3">
         <p className="flex flex-wrap items-center gap-2 text-fs-14 text-fg-3">
-          <ClubCrest
-            crest={crestFor({ id: String(l.academy.id), name: l.academy.name })}
+          <AcademyLogo
+            id={l.academy.id}
+            name={l.academy.name}
+            logoUrl={l.academy.logo_url}
             size={28}
           />
           <Link
@@ -174,7 +178,7 @@ export function LiveProgram({
               {t.overview}
             </h2>
             {l.description ? (
-              <p className="max-w-[58ch] text-fs-18 leading-lh-relaxed text-fg-2">
+              <p className="max-w-[58ch] text-fs-18 leading-lh-relaxed [overflow-wrap:anywhere] whitespace-pre-line text-fg-2">
                 {l.description}
               </p>
             ) : null}

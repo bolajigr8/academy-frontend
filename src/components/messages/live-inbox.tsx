@@ -6,7 +6,7 @@ import { useEffect, useState, type ReactNode } from "react"
 
 import { Icon } from "@/components/icons/icon"
 import { AvatarInitials } from "@/components/shared/avatar-initials"
-import { ClubCrest } from "@/components/shared/club-crest"
+import { AcademyLogo } from "@/components/shared/academy-logo"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorState } from "@/components/shared/error-state"
 import { StatusBadge } from "@/components/shared/status-badge"
@@ -15,7 +15,6 @@ import { ButtonLink } from "@/components/ui/button-link"
 import { DATES } from "@/data/catalog"
 import { EMPTY } from "@/data/copy"
 import { LIVE } from "@/data/live-copy"
-import { crestFor } from "@/features/academies/search"
 import { STATUS } from "@/features/applications/flow"
 import type { ThreadSide } from "@/features/messages/api"
 import {
@@ -138,11 +137,10 @@ export function LiveInbox({
                       tone="soft"
                     />
                   ) : (
-                    <ClubCrest
-                      crest={crestFor({
-                        id: r.academySlug ?? r.name,
-                        name: r.name,
-                      })}
+                    <AcademyLogo
+                      id={r.academySlug ?? r.name}
+                      name={r.name}
+                      logoUrl={r.academyLogo}
                       size={36}
                     />
                   )}

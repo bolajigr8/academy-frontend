@@ -18,12 +18,13 @@ import { NativeSelect } from "@/components/shared/native-select"
 import { QueryState } from "@/components/shared/query-state"
 import { SectionHead } from "@/components/shared/section-head"
 import { StatusBadge } from "@/components/shared/status-badge"
-import { ClubCrest } from "@/components/shared/club-crest"
+import { AcademyLogo } from "@/components/shared/academy-logo"
 import { DATES } from "@/data/catalog"
-import { crestFor } from "@/features/academies/search"
 import { stampOf } from "@/features/messages/conversations"
 import { isLive } from "@/lib/data-source"
 import { buttonVariants } from "@/components/ui/button"
+import { Notice } from "@/components/shared/notice"
+import { ButtonLink } from "@/components/ui/button-link"
 import { cn } from "@/lib/utils"
 import { FAMILY } from "@/data/family-copy"
 import { STATUS, STATUS_ORDER } from "@/features/applications/flow"
@@ -32,6 +33,7 @@ import {
   getDashboard,
   listApplications,
   type ApiAppSummary,
+  type ApiDashboard,
 } from "@/features/family/api"
 import { useLivePlayers } from "@/features/family/hooks"
 import { familyKeys } from "@/features/family/query-keys"
@@ -212,6 +214,8 @@ export function LiveDashboardClient() {
           const sent = d.applications.total - s.draft
           return (
             <>
+              {/* what an academy is waiting for: hard to miss, one tap away */}
+              <ActionNeeded d={d} />
               <KpiGrid label={t.title}>
                 <KpiCard
                   label={t.kpi.sent[0]}
@@ -286,13 +290,12 @@ export function LiveDashboardClient() {
                             href={routes.family.messages(String(a.id))}
                             className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-[10px] rounded-[8px] p-[10px] hover:bg-tint-neon-1"
                           >
-                            <ClubCrest
-                              crest={crestFor({
-                                id:
-                                  a.listing.academy.slug ??
-                                  a.listing.academy.name,
-                                name: a.listing.academy.name,
-                              })}
+                            <AcademyLogo
+                              id={
+                                a.listing.academy.slug ?? a.listing.academy.name
+                              }
+                              name={a.listing.academy.name}
+                              logoUrl={a.listing.academy.logo_url}
                               size={30}
                             />
                             <span className="grid min-w-0">
@@ -330,5 +333,50 @@ export function LiveDashboardClient() {
         }}
       </QueryState>
     </>
+  )
+}
+
+/*
+ * The family's to-dos from the dashboard counts (week 2 part 1): an academy
+ * asked for more information (info_required), or a place is waiting for its
+ * payment (enrollment_pending). The bell and the email say the same; this
+ * keeps it in view on the dashboard.
+ */
+function ActionNeeded({ d }: { d: ApiDashboard }) {
+  const A = LIVE.actionNeeded
+  const info = d.applications.by_status.info_required ?? 0
+  const pay = d.applications.by_status.enrollment_pending ?? 0
+  if (!info && !pay) return null
+  const firstOf = (status: string) =>
+    d.recent_applications.find((a) => a.status === status)
+  const link = (status: string) => {
+    const a = firstOf(status)
+    return a
+      ? routes.family.application(String(a.id))
+      : `${routes.family.applications}?status=${status}`
+  }
+  return (
+    <div className="grid gap-2">
+      {info ? (
+        <Notice tone="warning" icon="alert">
+          <span className="flex flex-wrap items-center justify-between gap-3">
+            <span>{A.info(info)}</span>
+            <ButtonLink href={link("info_required")} size="sm">
+              {info === 1 ? A.open : A.openFirst}
+            </ButtonLink>
+          </span>
+        </Notice>
+      ) : null}
+      {pay ? (
+        <Notice tone="warning" icon="wallet">
+          <span className="flex flex-wrap items-center justify-between gap-3">
+            <span>{A.pay(pay)}</span>
+            <ButtonLink href={routes.family.payments} size="sm">
+              {LIVE.enrollment.goPayments}
+            </ButtonLink>
+          </span>
+        </Notice>
+      ) : null}
+    </div>
   )
 }

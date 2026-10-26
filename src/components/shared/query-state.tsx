@@ -61,7 +61,8 @@ export function QueryState<T>({
     <div
       aria-busy={query.isFetching}
       className={cn(
-        "transition-opacity duration-(--dur-base) ease-out",
+        // sections shown together keep the page's spacing between them
+        "grid min-w-0 grid-cols-[minmax(0,1fr)] gap-[clamp(18px,2.2vw,26px)] transition-opacity duration-(--dur-base) ease-out",
         query.isFetching && "opacity-70"
       )}
     >

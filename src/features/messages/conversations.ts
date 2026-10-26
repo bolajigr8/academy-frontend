@@ -28,6 +28,8 @@ export type ConversationRow = {
   /** academy side: the player's initials; family side: the academy (crest) */
   initials: string
   academySlug: string | null
+  /** the academy's own logo (family side) */
+  academyLogo: string | null
 }
 
 const initialsOf = (first: string, last: string) =>
@@ -52,6 +54,7 @@ export function rowFromFamily(a: ApiAppSummary): ConversationRow {
     at: a.last_message?.sent_at ?? a.updated_at ?? a.submitted_at ?? "",
     initials: initialsOf(a.player.first_name, a.player.last_name),
     academySlug: a.listing.academy.slug ?? null,
+    academyLogo: a.listing.academy.logo_url ?? null,
   }
 }
 
@@ -74,6 +77,7 @@ export function rowFromInbox(a: ApiInboxItem): ConversationRow {
     at: a.last_message?.sent_at ?? a.updated_at ?? a.submitted_at ?? "",
     initials: initialsOf(a.player.first_name, a.player.last_name),
     academySlug: null,
+    academyLogo: null,
   }
 }
 

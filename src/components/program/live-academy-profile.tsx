@@ -127,7 +127,7 @@ export function LiveAcademyProfile({ slug }: { slug: string }) {
           <h2 id="ap-about" className={h2}>
             {t.about}
           </h2>
-          <p className="text-fs-16 leading-lh-relaxed whitespace-pre-line text-fg-2">
+          <p className="max-w-[70ch] text-fs-16 leading-lh-relaxed [overflow-wrap:anywhere] whitespace-pre-line text-fg-2">
             {a.description}
           </p>
         </section>

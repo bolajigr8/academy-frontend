@@ -599,8 +599,12 @@ export function PlayerDialog({
                   e.target.value = ""
                   return
                 }
-                // the profile photo follows the same 600 KB rule as every image
-                if (isPhoto && file && pickImages([file]).length === 0) {
+                // every image (the photo, or a passport scanned as a picture) is up to 600 KB
+                if (
+                  file &&
+                  file.type.startsWith("image/") &&
+                  pickImages([file]).length === 0
+                ) {
                   e.target.value = ""
                   return
                 }

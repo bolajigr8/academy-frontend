@@ -346,6 +346,8 @@ function Applicant({ a }: { a: ApiApplicant }) {
   const L = LIVE.academyApps
   const queryClient = useQueryClient()
   const [kind, setKind] = useState<Kind | null>(null)
+  // documents to pre-tick in Request information ("Ask for a new version")
+  const [preDocs, setPreDocs] = useState<number[]>([])
   // week 3 part 1: an accepted application can be moved to enrollment
   const [enrolling, setEnrolling] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -571,18 +573,35 @@ function Applicant({ a }: { a: ApiApplicant }) {
                         </Button>
                       ) : null}
                       {reviewable && d.review_status !== "needs_update" ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={busy}
-                          onClick={() =>
-                            run(() =>
-                              reviewDocument(a.id, d.id, "needs_update")
-                            )
-                          }
-                        >
-                          {t.needsUpdate}
-                        </Button>
+                        a.status === "under_review" ? (
+                          // one action: flag it, tell the family (bell, email,
+                          // Messages) and let them replace it (request-info)
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={busy}
+                            onClick={() => {
+                              setPreDocs([d.id])
+                              setKind("info")
+                            }}
+                          >
+                            {LIVE.academyApps.askNewVersion}
+                          </Button>
+                        ) : (
+                          // already waiting for the family: they can replace it now
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={busy}
+                            onClick={() =>
+                              run(() =>
+                                reviewDocument(a.id, d.id, "needs_update")
+                              )
+                            }
+                          >
+                            {t.needsUpdate}
+                          </Button>
+                        )
                       ) : null}
                     </span>
                   }
@@ -664,7 +683,11 @@ function Applicant({ a }: { a: ApiApplicant }) {
           kind={kind}
           busy={busy}
           run={run}
-          onClose={() => setKind(null)}
+          initialDocs={preDocs}
+          onClose={() => {
+            setKind(null)
+            setPreDocs([])
+          }}
         />
       ) : null}
       {enrolling ? (
@@ -694,9 +717,12 @@ function Decision({
   busy,
   run,
   onClose,
+  initialDocs = [],
 }: {
   a: ApiApplicant
   kind: Kind
+  /** documents ticked when the dialog opens (Ask for a new version) */
+  initialDocs?: number[]
   busy: boolean
   run: (
     job: () => Promise<ApiApplicant>,
@@ -718,7 +744,7 @@ function Decision({
   // application (player, program, start date); the academy reads it, edits
   // anything, and can go back to the standard text
   const [note, setNote] = useState(kind === "accept" ? standardOffer : "")
-  const [docs, setDocs] = useState<string[]>([])
+  const [docs, setDocs] = useState<string[]>(initialDocs.map(String))
   const [reason, setReason] = useState("")
   const [error, setError] = useState("")
   const docOptions = useMemo(

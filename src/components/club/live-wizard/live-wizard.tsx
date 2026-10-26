@@ -370,8 +370,10 @@ function Editor({
       setD((x) => ({ ...x, status: result.status }))
       setSaved(result)
       queryClient.setQueryData(clubKeys.listing(result.id), result)
-      void queryClient.invalidateQueries({ queryKey: clubKeys.listings() })
+      // the listings page shows the new status straight away ("In review")
+      await queryClient.invalidateQueries({ queryKey: clubKeys.listings() })
       notify(message)
+      router.push(routes.club.listings)
     } catch (error) {
       const list = missingItems(error)
       if (list) {

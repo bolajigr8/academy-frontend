@@ -13,6 +13,7 @@ import { TravelHandoff } from "@/components/family/travel-handoff"
 import { EnrollmentCard } from "@/components/enrollments/enrollment-card"
 import { FamilyReview } from "@/components/reviews/family-review"
 import { Icon } from "@/components/icons/icon"
+import { pickImages } from "@/components/shared/pick-images"
 import { ErrorState } from "@/components/shared/error-state"
 import { PageHeading } from "@/components/layout/page-heading"
 import { CardBlock } from "@/components/shared/card-block"
@@ -593,8 +594,15 @@ function DocumentsCard({
           aria-label={`${label}: ${docLabel(type)}`}
           onChange={(e) => {
             const file = e.target.files?.[0]
-            if (file) void upload(key, type, file, replacing)
             e.target.value = ""
+            // images up to 600 KB (a larger upload can be dropped by the server); PDFs as they are
+            if (
+              file &&
+              file.type.startsWith("image/") &&
+              pickImages([file]).length === 0
+            )
+              return
+            if (file) void upload(key, type, file, replacing)
           }}
         />
       </label>

@@ -488,6 +488,19 @@ export const LIVE = {
       `Congratulations! We are pleased to offer ${player} a place in ${program}, starting ${start}. We will be in touch soon with the next steps.`,
     empty: "Write a message to the family.",
   },
+  /** The family dashboard's to-dos (what an academy is waiting for) */
+  actionNeeded: {
+    info: (n: number) =>
+      n === 1
+        ? "An academy needs more information from you: answer its request or upload the document it asked for."
+        : `${n} academies need more information from you: answer their requests or upload the documents they asked for.`,
+    pay: (n: number) =>
+      n === 1
+        ? "A place is held for you: pay what is due now to keep it."
+        : `${n} places are held for you: pay what is due now to keep them.`,
+    open: "Open it",
+    openFirst: "Open the first",
+  },
   /** Week 3 part 2, sections 10 to 12: reviews */
   reviews: {
     categories: {
@@ -804,6 +817,7 @@ export const LIVE = {
   },
   /** Academy inbox and applicant page (week 2 part 2) */
   academyApps: {
+    askNewVersion: "Ask for a new version",
     parent: "Parent or guardian",
     relationship: {
       parent: "Parent",
