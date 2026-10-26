@@ -10,4 +10,10 @@ export const adminKeys = {
   users: (f: object) => [...adminKeys.all, "users", f] as const,
   applications: (f: object) => [...adminKeys.all, "applications", f] as const,
   application: (id: number) => [...adminKeys.all, "application", id] as const,
+  // week 3 part 2
+  reviews: (f: object) => [...adminKeys.all, "reviews", f] as const,
+  enrollments: (f: object) => [...adminKeys.all, "enrollments", f] as const,
+  enrollment: (id: number) => [...adminKeys.all, "enrollment", id] as const,
+  settings: () => [...adminKeys.all, "settings"] as const,
+  overview: (r: object) => [...adminKeys.all, "overview", r] as const,
 }

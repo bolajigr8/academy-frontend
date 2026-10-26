@@ -23,6 +23,7 @@ import { DATES } from "@/data/catalog"
 import { crestFor } from "@/features/academies/search"
 import { stampOf } from "@/features/messages/conversations"
 import { isLive } from "@/lib/data-source"
+import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { FAMILY } from "@/data/family-copy"
 import { STATUS, STATUS_ORDER } from "@/features/applications/flow"
@@ -50,7 +51,7 @@ export function LiveAppRow({ a, i = 0 }: { a: ApiAppSummary; i?: number }) {
     <motion.li {...inView(i)}>
       <Link
         href={routes.family.application(String(a.id))}
-        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-border-1 bg-surface-elevated p-[14px] hover:border-border-accent"
+        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-border-1 bg-surface-elevated p-[14px] hover:border-border-accent le-480:grid-cols-[minmax(0,1fr)]"
       >
         <span className="grid min-w-0 gap-1">
           <StatusBadge status={a.status} />
@@ -68,8 +69,24 @@ export function LiveAppRow({ a, i = 0 }: { a: ApiAppSummary; i?: number }) {
             {DATES.fmt(a.updated_at.slice(0, 10))}
           </small>
         </span>
-        <span className="flex items-center gap-1.5 text-fs-14 font-semibold">
-          {a.status === "draft" ? r.continue : r.view}
+        {/* the whole card opens it; the end of the card looks like the button it is */}
+        <span
+          className={cn(
+            buttonVariants({
+              variant:
+                a.status === "draft" || a.status === "enrollment_pending"
+                  ? "primary"
+                  : "secondary",
+              size: "sm",
+            }),
+            "pointer-events-none whitespace-nowrap le-480:justify-self-start"
+          )}
+        >
+          {a.status === "draft"
+            ? r.continue
+            : a.status === "enrollment_pending"
+              ? LIVE.enrollment.viewAndPay
+              : r.view}
           <Icon name="chevr" size={16} />
         </span>
       </Link>
@@ -102,7 +119,7 @@ export function LiveApplicationsClient({
     <>
       <PageHeading title={t.title} subtitle={t.subtitle} />
       <FormRow>
-        <FormField id="apps-status" label={t.byStatus}>
+        <FormField id="apps-status" optionalMarker={false} label={t.byStatus}>
           {(p) => (
             <NativeSelect
               {...p}
@@ -118,7 +135,7 @@ export function LiveApplicationsClient({
             </NativeSelect>
           )}
         </FormField>
-        <FormField id="apps-player" label={t.byPlayer}>
+        <FormField id="apps-player" optionalMarker={false} label={t.byPlayer}>
           {(p) => (
             <NativeSelect
               {...p}

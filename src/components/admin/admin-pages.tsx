@@ -10,6 +10,7 @@ import { Icon } from "@/components/icons/icon"
 import { CardBlock } from "@/components/shared/card-block"
 import { CheckField } from "@/components/shared/check-field"
 import { DocItem, DocList } from "@/components/shared/doc-list"
+import { ErrorState } from "@/components/shared/error-state"
 import { ErrorSummary } from "@/components/shared/error-summary"
 import { FormField } from "@/components/shared/form-field"
 import { Kv, KvLines } from "@/components/shared/key-value"
@@ -59,6 +60,9 @@ import {
   rejectVerification,
   unpublishListing,
   adminAttachmentPath,
+  getAdminOverview,
+  listAdminReviews,
+  type AdminOverview,
   adminVerificationDocumentPath,
   type AdminListingStatus,
   type VerificationStatus,
@@ -68,13 +72,14 @@ import { startAdminSession } from "@/features/auth/session"
 import { downloadPrivateFile } from "@/features/family/api"
 import { apiFeeLabel } from "@/features/club/view-models"
 import { formatMoney } from "@/lib/money"
+import { addDays, todayISO } from "@/lib/date"
 import { cn } from "@/lib/utils"
 import { routes } from "@/routes"
 
 /* ---------------- shared admin pieces ---------------- */
 
 const C = ADMIN.common
-const date = (iso: string | null | undefined) =>
+export const date = (iso: string | null | undefined) =>
   iso ? DATES.fmt(iso.slice(0, 10)) : C.none
 
 const TONE: Record<string, StatusTone> = {
@@ -97,7 +102,7 @@ const TONE: Record<string, StatusTone> = {
 }
 
 const ADMIN_PAGES =
-  /^\/admin(\/(verifications|listings|applications|organizations)(\/\d+)?|\/users)?\/?(\?.*)?$/
+  /^\/admin(\/(verifications|listings|applications|organizations|enrollments)(\/\d+)?|\/(users|reviews|commission))?\/?(\?.*)?$/
 
 /** A ?next= address after admin sign-in: only the admin's own pages */
 export function safeAdminNext(next: string | null | undefined): string | null {
@@ -111,7 +116,13 @@ const docTypeLabel = (type: string) =>
   type.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())
 
 /** The row's way in: "Review" (highlighted) while a decision waits, else "Open" */
-function RowAction({ href, waiting }: { href: string; waiting: boolean }) {
+export function RowAction({
+  href,
+  waiting,
+}: {
+  href: string
+  waiting: boolean
+}) {
   return (
     <ButtonLink
       href={href}
@@ -154,7 +165,7 @@ export function AdminHeader({
   )
 }
 
-function BackLink({ href }: { href: string }) {
+export function BackLink({ href }: { href: string }) {
   return (
     <Link
       href={href}
@@ -166,7 +177,7 @@ function BackLink({ href }: { href: string }) {
 }
 
 /** Previous / next with "Page 2 of 5 · 93 in total" (lists use page + meta) */
-function Pager({
+export function Pager({
   meta,
   page,
   setPage,
@@ -209,7 +220,7 @@ function Pager({
 }
 
 /** A text box that searches a moment after typing stops */
-function SearchBox({
+export function SearchBox({
   value,
   onChange,
   placeholder,
@@ -265,7 +276,7 @@ function Select<T extends string>({
 }
 
 /** Confirm a decision; `reason` asks for required text (reject note, unpublish reason) */
-function Confirm({
+export function Confirm({
   title,
   text,
   cta,
@@ -341,7 +352,7 @@ function Confirm({
   )
 }
 
-function useAdminMutation() {
+export function useAdminMutation() {
   const queryClient = useQueryClient()
   return async <T,>(job: () => Promise<T>, done: string) => {
     const result = await job()
@@ -477,6 +488,17 @@ export function AdminOverviewClient() {
     queryKey: adminKeys.applications({ per_page: 1 }),
     queryFn: () => listAdminApplications({ per_page: 1 }),
   })
+  // week 3 part 2: reviews waiting to be published, and the marketplace numbers
+  const pendingR = useQuery({
+    queryKey: adminKeys.reviews({ status: "pending", per_page: 3 }),
+    queryFn: () => listAdminReviews({ status: "pending", per_page: 3 }),
+  })
+  const [days, setDays] = useState(30)
+  const range = days === 30 ? {} : { from: addDays(todayISO(), -(days - 1)) }
+  const market = useQuery({
+    queryKey: adminKeys.overview(range),
+    queryFn: () => getAdminOverview(range),
+  })
   const n = (q: { data?: { meta?: { total: number } } }) =>
     q.data?.meta?.total ?? "…"
   const counts = apps.data?.meta?.status_counts ?? {}
@@ -580,8 +602,29 @@ export function AdminOverviewClient() {
             t.reviewListings,
             routes.admin.listings
           )}
+          {queue(
+            "h-q-reviews",
+            t.pendingReviews,
+            t.reviewsLead,
+            pendingR.data?.meta?.status_counts.pending ?? "…",
+            (pendingR.data?.data ?? []).map((r) => ({
+              key: r.id,
+              label: `${r.author} · ${r.overall}/5`,
+              sub: `${r.listing.title} · ${r.academy.name}`,
+              href: routes.admin.reviews,
+            })),
+            t.reviewReviews,
+            routes.admin.reviews
+          )}
         </div>
       </section>
+      <MarketplaceNumbers
+        data={market.data}
+        days={days}
+        setDays={setDays}
+        failed={market.isError && !market.data}
+        retry={() => void market.refetch()}
+      />
 
       <section aria-label={t.totals} className="grid gap-3">
         <h2 className="font-mono text-fs-12 tracking-gf-wide text-fg-3 uppercase">
@@ -628,8 +671,153 @@ export function AdminOverviewClient() {
           ))}
         </ul>
       </CardBlock>
-      <p className="text-fs-13 text-fg-3">{t.note}</p>
     </>
+  )
+}
+
+/** The eleven marketplace numbers (week 3 part 2, section 16) */
+function MarketplaceNumbers({
+  data,
+  days,
+  setDays,
+  failed,
+  retry,
+}: {
+  data: AdminOverview | undefined
+  days: number
+  setDays: (d: number) => void
+  failed: boolean
+  retry: () => void
+}) {
+  const m = ADMIN.market
+  const p = data?.period
+  const eur = (minor: number) =>
+    formatMoney({
+      amount_minor: minor,
+      amount: (minor / 100).toFixed(2),
+      currency: "EUR",
+    })
+  const v = (x: number | string | undefined) => (x === undefined ? "…" : x)
+  return (
+    <section aria-labelledby="h-market" className="grid gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h2
+          id="h-market"
+          className="font-mono text-fs-12 tracking-gf-wide text-fg-3 uppercase"
+        >
+          {m.title}
+          {data ? ` · ${date(data.range.from)} – ${date(data.range.to)}` : ""}
+        </h2>
+        <NativeSelect
+          aria-label={m.range}
+          size="sm"
+          value={String(days)}
+          onChange={(e) => setDays(Number(e.target.value))}
+          className="w-auto"
+        >
+          {LIVE.dashboard.ranges.map((r) => (
+            <option key={r.days} value={r.days}>
+              {r.label}
+            </option>
+          ))}
+        </NativeSelect>
+      </div>
+      {failed ? (
+        <ErrorState message={LIVE.requestFailed} onRetry={retry} />
+      ) : (
+        <>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-4">
+            <KpiCard
+              label={m.applications}
+              value={v(p?.applications_submitted)}
+              sub={m.applicationsSub}
+            />
+            <KpiCard
+              label={m.response}
+              value={
+                p
+                  ? p.application_response_rate.rate === null
+                    ? "—"
+                    : `${p.application_response_rate.rate}%`
+                  : "…"
+              }
+              sub={
+                p
+                  ? p.application_response_rate.rate === null
+                    ? m.responseNone
+                    : m.responseSub(
+                        p.application_response_rate.answered,
+                        p.application_response_rate.measured
+                      )
+                  : undefined
+              }
+            />
+            <KpiCard
+              label={m.repeat}
+              value={v(p?.repeat_applications.applications)}
+              sub={
+                p ? m.repeatSub(p.repeat_applications.applicants) : undefined
+              }
+            />
+            <KpiCard label={m.searches} value={v(p?.searches)} />
+            <KpiCard label={m.views} value={v(p?.listing_views)} />
+            <KpiCard
+              label={m.newAccounts}
+              value={v(p?.new_players_and_parents)}
+            />
+            <KpiCard label={m.saved} value={v(p?.saved_listings_added)} />
+            <KpiCard label={m.reviews} value={v(p?.verified_reviews_added)} />
+            <KpiCard
+              label={m.gmv}
+              value={p ? eur(p.revenue.gmv_minor) : "…"}
+              sub={m.revenueSub}
+            />
+            <KpiCard
+              label={m.commission}
+              value={p ? eur(p.revenue.commission_minor) : "…"}
+              sub={m.revenueSub}
+            />
+          </div>
+          {p && p.revenue.unconverted.length ? (
+            <p className="text-fs-13 text-fg-3">
+              {m.unconverted(
+                p.revenue.unconverted
+                  .map(
+                    (u) =>
+                      `${u.currency} ${(u.gross_minor / 100).toFixed(2)} (${u.paid_rows})`
+                  )
+                  .join(", ")
+              )}
+            </p>
+          ) : null}
+          <h3 className="font-mono text-fs-12 tracking-gf-wide text-fg-3 uppercase">
+            {m.now}
+          </h3>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(180px,100%),1fr))] gap-4">
+            <KpiCard
+              label={m.verifiedAcademies}
+              value={v(data?.snapshot.verified_academies)}
+            />
+            <KpiCard
+              label={m.activeListings}
+              value={v(data?.snapshot.active_listings)}
+            />
+            <KpiCard
+              label={m.accounts}
+              value={v(data?.snapshot.registered_players_and_parents)}
+            />
+            <KpiCard
+              label={m.savedNow}
+              value={v(data?.snapshot.saved_listings)}
+            />
+            <KpiCard
+              label={m.reviewsNow}
+              value={v(data?.snapshot.verified_reviews)}
+            />
+          </div>
+        </>
+      )}
+    </section>
   )
 }
 
@@ -678,7 +866,7 @@ export function AdminVerificationsClient() {
         empty={<p className="text-fs-14 text-fg-3">{C.empty}</p>}
       >
         {(rows) => (
-          <Table>
+          <Table className="am-stack-sm">
             <TableHeader>
               <TableRow>
                 <TableHead>{t.academy}</TableHead>
@@ -708,9 +896,11 @@ export function AdminVerificationsClient() {
                     <StatusTag status={v.verification_status} />
                   </TableCell>
                   <TableCell>
-                    {v.verification_reviewed_at
-                      ? `${date(v.verification_reviewed_at)}${v.verification_reviewed_by ? ` ${C.by} ${v.verification_reviewed_by.name}` : ""}`
-                      : C.none}
+                    {v.verification_reviewed_at ? (
+                      `${date(v.verification_reviewed_at)}${v.verification_reviewed_by ? ` ${C.by} ${v.verification_reviewed_by.name}` : ""}`
+                    ) : (
+                      <span className="am-dash">{C.none}</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <RowAction
@@ -962,7 +1152,7 @@ export function AdminListingsClient() {
         empty={<p className="text-fs-14 text-fg-3">{C.empty}</p>}
       >
         {(rows) => (
-          <Table>
+          <Table className="am-stack-sm">
             <TableHeader>
               <TableRow>
                 <TableHead>{t.listing}</TableHead>
@@ -991,7 +1181,11 @@ export function AdminListingsClient() {
                     <StatusTag status={l.academy.verification_status} />
                   </TableCell>
                   <TableCell>
-                    {l.price ? formatMoney(l.price) : C.none}
+                    {l.price ? (
+                      formatMoney(l.price)
+                    ) : (
+                      <span className="am-dash">{C.none}</span>
+                    )}
                   </TableCell>
                   <TableCell>{date(l.submitted_at)}</TableCell>
                   <TableCell>
@@ -1212,7 +1406,7 @@ export function AdminOrganizationsClient() {
         empty={<p className="text-fs-14 text-fg-3">{C.empty}</p>}
       >
         {(rows) => (
-          <Table>
+          <Table className="am-stack-sm">
             <TableHeader>
               <TableRow>
                 <TableHead>{t.name}</TableHead>
@@ -1234,7 +1428,11 @@ export function AdminOrganizationsClient() {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    {o.owner ? `${o.owner.name} · ${o.owner.email}` : C.none}
+                    {o.owner ? (
+                      `${o.owner.name} · ${o.owner.email}`
+                    ) : (
+                      <span className="am-dash">{C.none}</span>
+                    )}
                   </TableCell>
                   <TableCell className="tabular-nums">
                     {o.academies_count}
@@ -1406,7 +1604,7 @@ export function AdminUsersClient() {
         empty={<p className="text-fs-14 text-fg-3">{C.empty}</p>}
       >
         {(rows) => (
-          <Table>
+          <Table className="am-stack-sm">
             <TableHeader>
               <TableRow>
                 <TableHead>{t.name}</TableHead>
@@ -1508,7 +1706,7 @@ export function AdminApplicationsClient({
         empty={<p className="text-fs-14 text-fg-3">{C.empty}</p>}
       >
         {(rows) => (
-          <Table>
+          <Table className="am-stack-sm">
             <TableHeader>
               <TableRow>
                 <TableHead>{t.reference}</TableHead>

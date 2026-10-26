@@ -10,7 +10,10 @@ import {
   type JourneyStep,
 } from "@/components/apply/application-journey"
 import { TravelHandoff } from "@/components/family/travel-handoff"
+import { EnrollmentCard } from "@/components/enrollments/enrollment-card"
+import { FamilyReview } from "@/components/reviews/family-review"
 import { Icon } from "@/components/icons/icon"
+import { ErrorState } from "@/components/shared/error-state"
 import { PageHeading } from "@/components/layout/page-heading"
 import { CardBlock } from "@/components/shared/card-block"
 import { CheckField } from "@/components/shared/check-field"
@@ -56,6 +59,7 @@ import {
   type ApiMissingForSubmission,
 } from "@/features/family/api"
 import { getPublicListing } from "@/features/academies/api"
+import { enrollmentKeys, getMyEnrollment } from "@/features/enrollments/api"
 import { placesLabel } from "@/features/academies/search"
 import { ageOn } from "@/features/family/player-form"
 import { familyKeys } from "@/features/family/query-keys"
@@ -151,6 +155,8 @@ function ApplicationView({ a }: { a: ApiApplication }) {
       queryKey: [...familyKeys.all, "applications"],
     })
     void queryClient.invalidateQueries({ queryKey: familyKeys.dashboard() })
+    // a withdraw cancels the enrollment and its unpaid lines (week 3 part 1, section 5)
+    void queryClient.invalidateQueries({ queryKey: enrollmentKeys.all })
   }
   // 422 field errors under their boxes: answers.<position>, the withdraw
   // reason, the reply note (errors.reason as a LIST is a field error; as a
@@ -265,7 +271,22 @@ function ApplicationView({ a }: { a: ApiApplication }) {
       </div>
       <Grid2>
         <Stack>
-          <StatusExplainer status={a.status} />
+          <StatusExplainer
+            status={a.status}
+            text={
+              a.status === "enrollment_pending"
+                ? LIVE.enrollment.pendingFamily
+                : undefined
+            }
+            // the enrollment card right below holds Pay now and Go to Payments
+          />
+          {/* week 3 part 1: absent until the academy moves it to enrollment */}
+          {a.enrollment ? (
+            <FamilyEnrollment
+              id={a.enrollment.id}
+              status={a.enrollment.status}
+            />
+          ) : null}
           {a.status === "info_required" ? (
             <CardBlock aria-labelledby="h-respond">
               <SectionHead id="h-respond" title={t.infoLead} />
@@ -489,6 +510,9 @@ function ApplicationView({ a }: { a: ApiApplication }) {
       >
         <p className="text-fs-16 leading-lh-relaxed text-fg-2">
           {t.cancelText}
+          {a.status === "enrollment_pending"
+            ? ` ${LIVE.enrollment.cancelPending}`
+            : ""}
         </p>
         <FormField
           id="app-cancel-reason"
@@ -901,6 +925,46 @@ function ChangeIntake({
           <p className="text-fs-14 text-fg-3">{c.none}</p>
         )}
       </Modal>
+    </>
+  )
+}
+
+/*
+ * The family's enrollment with its schedule (week 3 part 1, section 3): the
+ * application carries only {id, status}, so the schedule is read from
+ * GET /academy/me/enrollments/{id}. Re-read when its status changes.
+ */
+function FamilyEnrollment({ id, status }: { id: number; status: string }) {
+  const q = useQuery({
+    queryKey: [...enrollmentKeys.myOne(id), status],
+    queryFn: () => getMyEnrollment(id),
+  })
+  if (q.isPending)
+    return (
+      <div
+        aria-hidden="true"
+        className="h-48 animate-pulse rounded-lg bg-bg-2"
+      />
+    )
+  if (!q.data)
+    return (
+      <ErrorState
+        message={LIVE.requestFailed}
+        onRetry={() => void q.refetch()}
+      />
+    )
+  return (
+    <>
+      <EnrollmentCard e={q.data} side="family" />
+      {/* week 3 part 2: a confirmed enrollment can be reviewed once; a written
+          review stays visible whatever happens to the enrollment */}
+      {q.data.status === "confirmed" || q.data.review ? (
+        <FamilyReview
+          enrollmentId={q.data.id}
+          academyName={q.data.listing.academy.name}
+          review={q.data.review}
+        />
+      ) : null}
     </>
   )
 }

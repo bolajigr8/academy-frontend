@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 
 import { Icon } from "@/components/icons/icon"
 import { DefList, h4 } from "@/components/program/program-blocks"
+import { ListingReviews } from "@/components/reviews/listing-reviews"
 import { useLiveSaved } from "@/components/search/use-live-saved"
 import { CheckList } from "@/components/shared/check-list"
 import { ClubCrest } from "@/components/shared/club-crest"
@@ -406,12 +407,9 @@ export function LiveProgram({
             <h2 id="h-reviews" className={dsecH}>
               {t.reviews}
             </h2>
-            <p className={body}>
-              {l.reviews_count
-                ? `${l.rating_avg} · ${l.reviews_count} ${t.verifiedReviews}`
-                : L.noReviews}
-            </p>
             <p className="text-fs-14 text-fg-3">{t.reviewsIntro}</p>
+            {/* week 3 part 2: GET /academy/listings/{slug}/reviews */}
+            <ListingReviews slug={l.slug} academyName={l.academy.name} />
           </motion.section>
 
           <motion.section

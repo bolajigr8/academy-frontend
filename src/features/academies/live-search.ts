@@ -68,6 +68,7 @@ export const LIVE_SORTS: { id: SearchSort; label: string }[] = [
   { id: "price_asc", label: "Price: low to high" },
   { id: "price_desc", label: "Price: high to low" },
   { id: "start_date", label: "Soonest start" },
+  { id: "rating", label: "Top rated" },
 ]
 
 /** The prototype's duration buckets, in weeks ("Rolling monthly" has no search filter) */

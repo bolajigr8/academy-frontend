@@ -19,11 +19,14 @@ export function StatusExplainer({
   status,
   role = "family",
   action,
+  text,
 }: {
   status: AppStatus
   role?: Role
   /** the next step: a button or link, left-aligned (.amk-explain .amk-btn) */
   action?: ReactNode
+  /** api mode: a line more precise than the prototype's (e.g. any payment plan) */
+  text?: string
 }) {
   const m = STATUS[status]
   return (
@@ -37,7 +40,7 @@ export function StatusExplainer({
         <StatusBadge status={status} />
       </div>
       <p className="text-fs-14 text-fg-2">
-        {role === "academy" ? m.host : m.family}
+        {text ?? (role === "academy" ? m.host : m.family)}
       </p>
       {action ? <div className="justify-self-start">{action}</div> : null}
     </div>

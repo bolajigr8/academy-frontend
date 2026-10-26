@@ -149,6 +149,8 @@ export type ApiListing = {
   intakes: ApiIntake[]
   created_at: string
   updated_at: string
+  /** week 3 part 2: views over the last 30 days, on the list only */
+  recent_views?: number
 }
 
 /** GET /academy/portal/options: every dropdown value comes from here */

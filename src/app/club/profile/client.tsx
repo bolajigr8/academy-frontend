@@ -22,6 +22,7 @@ import { notify } from "@/components/shared/notify"
 import { Button } from "@/components/ui/button"
 import { ButtonLink } from "@/components/ui/button-link"
 import { VerificationDocuments } from "@/components/club/verification-documents"
+import { PortalReviews } from "@/components/reviews/portal-reviews"
 import { DATES } from "@/data/catalog"
 import { CLUB } from "@/data/club-copy"
 import { LIVE } from "@/data/live-copy"
@@ -324,6 +325,8 @@ function Profile({ p }: { p: ClubProfileView }) {
           </CardBlock>
         </Stack>
       </Grid2>
+      {/* week 3 part 2: published reviews and the academy's replies */}
+      {p.liveVerification ? <PortalReviews /> : null}
     </div>
   )
 }

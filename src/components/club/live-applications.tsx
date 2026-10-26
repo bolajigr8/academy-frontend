@@ -12,8 +12,9 @@ import { CardBlock } from "@/components/shared/card-block"
 import { CheckGrid } from "@/components/shared/check-grid"
 import { DocItem, DocList } from "@/components/shared/doc-list"
 import { EmptyState } from "@/components/shared/empty-state"
-import { CheckField } from "@/components/shared/check-field"
-import { FieldError, FormField } from "@/components/shared/form-field"
+import { EnrollmentCard } from "@/components/enrollments/enrollment-card"
+import { MoveToEnrollmentDialog } from "@/components/enrollments/move-to-enrollment"
+import { FormField } from "@/components/shared/form-field"
 import { Kv, KvLines } from "@/components/shared/key-value"
 import { Modal } from "@/components/shared/modal"
 import { NativeSelect } from "@/components/shared/native-select"
@@ -24,6 +25,7 @@ import { QueryState } from "@/components/shared/query-state"
 import { SectionHead } from "@/components/shared/section-head"
 import { SpecCells } from "@/components/shared/spec-cells"
 import { StatusBadge } from "@/components/shared/status-badge"
+import { StatusExplainer } from "@/components/shared/status-explainer"
 import { StatusPill } from "@/components/shared/status-pill"
 import { Timeline } from "@/components/shared/timeline"
 import { Button } from "@/components/ui/button"
@@ -49,6 +51,7 @@ import {
 } from "@/features/club/applications-api"
 import { listAllListings } from "@/features/club/api"
 import { clubKeys } from "@/features/club/query-keys"
+import { enrollmentKeys } from "@/features/enrollments/api"
 import { downloadPrivateFile } from "@/features/family/api"
 import { ageOn } from "@/features/family/player-form"
 import { apiFeeLabel } from "@/features/club/view-models"
@@ -124,6 +127,12 @@ function InboxCard({ a }: { a: ApiInboxItem }) {
             {t.docs} {a.documents_accepted_count}/{a.documents_count}
           </span>
         </div>
+        {/* the card says what comes next, so nobody has to know where to look */}
+        {a.status === "accepted" ? (
+          <span className="flex items-center gap-1.5 rounded-sm bg-tint-neon-1 px-2 py-1.5 text-fs-12 font-semibold text-fg-1">
+            <Icon name="wallet" size={13} /> {LIVE.enrollment.cardNext}
+          </span>
+        ) : null}
       </MotionLink>
     </li>
   )
@@ -189,6 +198,34 @@ export function LiveInboxClient() {
           <Icon name="info" size={14} /> {t.note}
         </p>
       </div>
+      {/* accepted applications wait for their payment schedule: say so above
+          the board and take the academy straight to that column */}
+      {(query.data?.meta.status_counts.accepted ?? 0) > 0 ? (
+        <Notice tone="success" icon="wallet">
+          <span className="flex flex-wrap items-center justify-between gap-3">
+            <span>
+              {LIVE.enrollment.acceptedBanner(
+                query.data?.meta.status_counts.accepted ?? 0
+              )}
+            </span>
+            <Button
+              size="sm"
+              onClick={() =>
+                document
+                  .getElementById("col-accepted")
+                  ?.closest("section")
+                  ?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                    inline: "start",
+                  })
+              }
+            >
+              {LIVE.enrollment.showAccepted}
+            </Button>
+          </span>
+        </Notice>
+      ) : null}
       <QueryState
         query={{ ...query, data: query.data?.data }}
         errorFallback={LIVE.requestFailed}
@@ -309,6 +346,8 @@ function Applicant({ a }: { a: ApiApplicant }) {
   const L = LIVE.academyApps
   const queryClient = useQueryClient()
   const [kind, setKind] = useState<Kind | null>(null)
+  // week 3 part 1: an accepted application can be moved to enrollment
+  const [enrolling, setEnrolling] = useState(false)
   const [busy, setBusy] = useState(false)
   const countries = useCountries()
   const p = a.player
@@ -416,6 +455,24 @@ function Applicant({ a }: { a: ApiApplicant }) {
       />
       <Grid2>
         <Stack>
+          {/* the next step, said where the academy looks: an accepted
+              application waits for its payment schedule */}
+          {a.status === "accepted" ? (
+            <StatusExplainer
+              status="accepted"
+              role="academy"
+              text={LIVE.enrollment.acceptedNext}
+              action={
+                <Button size="sm" onClick={() => setEnrolling(true)}>
+                  <Icon name="wallet" size={15} /> {LIVE.enrollment.move}
+                </Button>
+              }
+            />
+          ) : null}
+          {/* the enrollment block is absent until the move (week 3 part 1, section 6) */}
+          {a.enrollment ? (
+            <EnrollmentCard e={a.enrollment} side="academy" />
+          ) : null}
           <CardBlock aria-labelledby="h-player">
             <SectionHead id="h-player" title={t.playerProfile} />
             <div className="flex items-center gap-3">
@@ -610,6 +667,23 @@ function Applicant({ a }: { a: ApiApplicant }) {
           onClose={() => setKind(null)}
         />
       ) : null}
+      {enrolling ? (
+        <MoveToEnrollmentDialog
+          a={a}
+          open={enrolling}
+          onClose={() => {
+            setEnrolling(false)
+            // a status refusal or a race: show what the backend has now
+            void queryClient.invalidateQueries({
+              queryKey: clubKeys.applicant(a.id),
+            })
+          }}
+          onDone={(next) => {
+            apply(next)
+            void queryClient.invalidateQueries({ queryKey: enrollmentKeys.all })
+          }}
+        />
+      ) : null}
     </>
   )
 }
@@ -640,10 +714,10 @@ function Decision({
     a.listing.title,
     DATES.fmt(a.intake.start_date)
   )
-  // accept: the standard offer is on by default; switching it off opens an
-  // editable message that starts from the standard text
-  const [useStandard, setUseStandard] = useState(true)
-  const [note, setNote] = useState("")
+  // accept: the message box starts with the standard offer, filled from the
+  // application (player, program, start date); the academy reads it, edits
+  // anything, and can go back to the standard text
+  const [note, setNote] = useState(kind === "accept" ? standardOffer : "")
   const [docs, setDocs] = useState<string[]>([])
   const [reason, setReason] = useState("")
   const [error, setError] = useState("")
@@ -682,7 +756,7 @@ function Decision({
       )
         onClose()
     } else if (kind === "accept") {
-      const message = useStandard ? standardOffer : note.trim()
+      const message = note.trim()
       if (!message) return setServerErrors({ "dec-note": O.empty })
       if (
         await run(() => acceptApplication(a.id, message), L.accepted, onError)
@@ -763,63 +837,42 @@ function Decision({
             )}
           </FormField>
         ) : null}
-        {kind === "accept" ? (
-          <div className="grid gap-2">
-            <CheckField
-              checked={useStandard}
-              onChange={(e) => {
-                setUseStandard(e.target.checked)
-                // writing your own starts from the standard text
-                if (!e.target.checked && !note) setNote(standardOffer)
-              }}
-            >
-              {O.useStandard}
-            </CheckField>
-            {useStandard ? (
-              <div className="grid gap-1 rounded-md border border-border-2 bg-bg-2 p-3">
-                <small className="text-fs-12 font-semibold text-fg-3">
-                  {O.standardLabel}
-                </small>
-                <p className="text-fs-14 leading-lh-relaxed text-fg-1">
-                  {standardOffer}
-                </p>
-              </div>
-            ) : null}
-            {useStandard && serverErrors["dec-note"] ? (
-              <FieldError id="dec-note-err">
-                {serverErrors["dec-note"]}
-              </FieldError>
-            ) : null}
-          </div>
-        ) : null}
-        {kind === "accept" && useStandard ? null : (
-          <FormField
-            id="dec-note"
-            label={
-              kind === "info"
-                ? t.info.label
-                : kind === "accept"
-                  ? O.ownLabel
-                  : t.decline.note
-            }
-            hint={kind === "accept" ? O.ownHint : undefined}
-            required={kind === "info"}
-            error={
-              (kind === "info" && error ? error : undefined) ??
-              serverErrors["dec-note"]
-            }
+        <FormField
+          id="dec-note"
+          label={
+            kind === "info"
+              ? t.info.label
+              : kind === "accept"
+                ? O.ownLabel
+                : t.decline.note
+          }
+          hint={kind === "accept" ? O.ownHint : undefined}
+          required={kind === "info" || kind === "accept"}
+          error={
+            (kind === "info" && error ? error : undefined) ??
+            serverErrors["dec-note"]
+          }
+        >
+          {(p) => (
+            <Textarea
+              {...p}
+              value={note}
+              maxLength={noteMax}
+              placeholder={kind === "info" ? t.info.placeholder : undefined}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          )}
+        </FormField>
+        {kind === "accept" && note !== standardOffer ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="justify-self-start"
+            onClick={() => setNote(standardOffer)}
           >
-            {(p) => (
-              <Textarea
-                {...p}
-                value={note}
-                maxLength={noteMax}
-                placeholder={kind === "info" ? t.info.placeholder : undefined}
-                onChange={(e) => setNote(e.target.value)}
-              />
-            )}
-          </FormField>
-        )}
+            {O.resetStandard}
+          </Button>
+        ) : null}
         {kind === "info" && docOptions.length ? (
           <fieldset className="m-0 grid min-w-0 gap-1.5 border-0 p-0">
             <legend className="p-0 text-fs-14 font-semibold text-fg-1">

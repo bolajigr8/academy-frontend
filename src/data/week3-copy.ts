@@ -1,0 +1,288 @@
+/*
+ * Week 3 part 2 copy (reviews, the academy dashboard, Golafly's enrollment,
+ * commission and overview screens). The prototype has no design for these,
+ * so every string here is flagged as not from the prototype. Banned words
+ * are checked by the copy tests.
+ */
+
+export const REVIEWS = {
+  areas: {
+    training: "Training",
+    communication: "Communication",
+    facilities: "Facilities",
+    organization: "Organization",
+  } as Record<string, string>,
+  // the family writes a review (on its confirmed enrollment)
+  formTitle: "Review this academy",
+  formLead:
+    "You were enrolled, so your review shows as a verified enrollment. Golafly checks it before it goes public.",
+  rateLabel: (area: string) => `${area}: choose a rating from 1 to 5`,
+  star: (n: number) => (n === 1 ? "1 star" : `${n} stars`),
+  bodyLabel: "Your review",
+  bodyHint: "10 to 2,000 characters. Say what it was really like.",
+  bodyPlaceholder: "What went well, and what could be better?",
+  submit: "Send review",
+  sent: "Review sent. It will appear once Golafly has checked it.",
+  ratingRequired: "Choose a rating for each area.",
+  bodyShort: "Write at least 10 characters.",
+  yourReview: "Your review",
+  status: {
+    pending: "Waiting for Golafly to check it",
+    published: "Public",
+    rejected: "Not published",
+  } as Record<string, string>,
+  rejectedWhy: (reason: string) => `Golafly’s reason: ${reason}`,
+  pendingNote: "Only you can see it until Golafly publishes it.",
+  publishedNote: "Everyone can read it on the program page.",
+  rejectedNote: "A rejected review is final and does not count.",
+  academyReply: "Reply from the academy",
+  // the public listing page
+  title: "Reviews",
+  noneYet:
+    "No reviews yet. They appear here once families who enrolled have written one.",
+  fromEnrolled: (n: number) =>
+    n === 1
+      ? "1 review from an enrolled family"
+      : `${n} reviews from enrolled families`,
+  verified: "Verified enrollment",
+  loadMore: "Show more reviews",
+  // the academy's Reviews page
+  pageTitle: "Reviews",
+  pageSub: "What enrolled families say about your academy",
+  allListings: "All listings",
+  filterAll: "All reviews",
+  filterNeedsReply: "Waiting for your reply",
+  filterAnswered: "Answered",
+  listingFilter: "Listing",
+  statusFilter: "Show",
+  empty:
+    "No published reviews yet. Families can review you once their enrollment is confirmed, and Golafly publishes each review after checking it.",
+  emptyFiltered: "No reviews match this filter.",
+  reply: "Reply",
+  replyTitle: (name: string) => `Reply to ${name}`,
+  replyLabel: "Your public reply",
+  replyHint:
+    "Everyone can read it under the review. You can’t edit it after sending, so check it first.",
+  replySend: "Post reply",
+  replied: "Reply posted.",
+  replyEmpty: "Write your reply first.",
+  replyDone: "You replied",
+  already: "This review already has a reply.",
+  summaryAvg: "Overall rating",
+  // the bell
+  openReviews: "Open reviews",
+} as const
+
+export const DASH = {
+  title: "Dashboard",
+  subtitle: "Your academy’s numbers",
+  rangeLabel: "Period",
+  last30: "Last 30 days",
+  last7: "Last 7 days",
+  last90: "Last 90 days",
+  custom: "Pick dates",
+  from: "From",
+  to: "To",
+  apply: "Apply",
+  showing: (from: string, to: string) => `${from} to ${to}`,
+  kpi: {
+    received: ["Applications received", "sent in this period"],
+    accepted: ["Accepted", "offers made in this period"],
+    enrolled: ["Players enrolled", "confirmed in this period"],
+    views: ["Listing views", "in this period"],
+    viewToApp: ["Views to applications", "applications per view"],
+    appToEnrol: ["Applications to enrollments", "of those sent, now enrolled"],
+    pending: ["Waiting for you", "applications to decide on now"],
+    active: ["Active listings", "published now"],
+  } as Record<string, [string, string]>,
+  notPublished: (n: number) => `${n} not published`,
+  noRate: "No data yet",
+  revenueTitle: "Revenue",
+  revenueSub: "Paid in this period, one line per currency",
+  revenueEmpty:
+    "Nothing has been paid in this period. Payments appear here once families pay online.",
+  gross: "Collected",
+  commission: "Golafly commission",
+  net: "Your share",
+  needsDecision: "Needs a decision",
+  needsDecisionSub: "Applications waiting for you",
+  upToDate: "You’re up to date. Nothing is waiting for a decision.",
+  openBoard: "Open applications",
+  capacity: "Places by start date",
+  capacitySub: "Open start dates of your published listings",
+  noCapacity: "No open start dates yet.",
+  views: "Views by week",
+  viewsCaption:
+    "Views of all your listings in the last 8 weeks. This week is not over yet.",
+  activity: "Recent activity",
+  noActivity: "No activity yet.",
+  seeAll: "Applications",
+  verification: "Verification",
+  places: (left: number) =>
+    left === 1 ? "1 place left" : `${left} places left`,
+  unlimited: "Unlimited places",
+  full: "Full",
+  cta: {
+    submitted: "Review",
+    under_review: "Decide",
+    info_required: "Open",
+    accepted: "Move to enrollment",
+  } as Record<string, string>,
+  listingViews: "Views, 30 days",
+  rangeOrder: "The end date can’t be before the start date.",
+  rangeFuture: "The start date can’t be in the future.",
+  verificationText: {
+    pending:
+      "Golafly is verifying your academy. Your listings go public once it is verified.",
+    verified: "Your academy is Golafly Verified.",
+    club_academy: "Your academy is verified as an official Club Academy.",
+    rejected:
+      "Verification needs your attention. Open the academy profile to read Golafly’s note.",
+  } as Record<string, string>,
+} as const
+
+export const ADMIN3 = {
+  nav: {
+    reviews: "Reviews",
+    enrollments: "Enrollments",
+    commission: "Commission",
+  },
+  // overview
+  overviewRange: "Period",
+  kpi: {
+    applications: ["Applications submitted", "sent in this period"],
+    response: ["Answered within 7 days", "of applications old enough to judge"],
+    repeat: ["Repeat applications", "from accounts that applied before"],
+    searches: ["Searches", "in this period"],
+    views: ["Listing views", "in this period"],
+    newUsers: ["New players and parents", "accounts created"],
+    saved: ["Listings saved", "added and still saved"],
+    reviewsAdded: ["Reviews published", "in this period"],
+    gmv: ["Sales (GMV)", "paid in this period, in euros"],
+    commission: ["Commission", "Golafly’s share, in euros"],
+  } as Record<string, [string, string]>,
+  now: "Right now",
+  nowItems: {
+    verified_academies: "Verified academies",
+    active_listings: "Published listings",
+    registered_players_and_parents: "Players and parents",
+    saved_listings: "Saved listings",
+    verified_reviews: "Published reviews",
+  } as Record<string, string>,
+  responseOf: (answered: number, measured: number) =>
+    `${answered} of ${measured}`,
+  repeatOf: (apps: number, people: number) =>
+    `${apps} applications · ${people} accounts`,
+  unconvertedTitle: "Paid in another currency, not converted",
+  unconvertedText:
+    "These paid rows have no euro rate yet, so they are not in the totals above.",
+  unconvertedRow: (cur: string, rows: number) =>
+    `${cur}: ${rows} paid ${rows === 1 ? "row" : "rows"}`,
+  // reviews
+  reviews: {
+    title: "Review moderation",
+    sub: "A review is public only after you publish it",
+    tabs: {
+      pending: "Waiting",
+      published: "Published",
+      rejected: "Rejected",
+    } as Record<string, string>,
+    empty: "No reviews here.",
+    by: "By",
+    about: "About",
+    enrollment: "Enrollment",
+    publish: "Publish",
+    publishTitle: "Publish this review?",
+    publishText:
+      "It becomes public, the academy’s rating is recalculated, and the author and the academy are told.",
+    published: "Review published.",
+    reject: "Reject",
+    takeDown: "Take down",
+    rejectTitle: "Reject this review?",
+    takeDownTitle: "Take this review down?",
+    rejectText: "The author is told why. A rejected review is final.",
+    takeDownText:
+      "It stops being public and the academy’s rating is recalculated. The author is told why.",
+    reason: "Reason",
+    reasonHint: "The author reads this. At most 2,000 characters.",
+    reasonRequired: "Write the reason.",
+    rejected: "Review rejected.",
+    reviewedBy: (name: string, at: string) => `Decided by ${name} on ${at}`,
+    rejectionReason: "Reason given",
+    cancel: "Cancel",
+  },
+  // enrollments
+  enrollments: {
+    all: "All",
+    application: "Application",
+    title: "Enrollments",
+    sub: "Every enrollment in the marketplace, with the money",
+    tabs: {
+      pending: "Waiting for payment",
+      confirmed: "Enrolled",
+      cancelled: "Cancelled",
+    } as Record<string, string>,
+    search: "Search by reference, family or player",
+    empty: "No enrollments here.",
+    viewDetails: "View details",
+    family: "Family",
+    program: "Program",
+    commissionRate: "Commission",
+    organization: "Organization",
+    detailTitle: "Enrollment",
+    back: "All enrollments",
+    schedule: "Payment schedule",
+    commissionCol: "Commission",
+    payoutCol: "Academy payout",
+    totals: "Totals",
+    cancel: "Cancel enrollment",
+    cancelTitle: "Cancel this enrollment?",
+    cancelText:
+      "The application and the enrollment are cancelled, unpaid lines are cancelled, paid lines remain paid, the held place goes back and the family and academy are told. Nothing is sent to Stripe: refunds are made by hand.",
+    reason: "Reason",
+    reasonHint: "The family and the academy read this. Write it for them.",
+    reasonRequired: "Write the reason the family and the academy will read.",
+    refundNote: "Refund note (only Golafly sees it)",
+    refundHint: "For example what was refunded by hand. Optional.",
+    cancelled: "Enrollment cancelled.",
+    keep: "Keep it",
+    confirmCancel: "Cancel enrollment",
+    cancellation: "Cancellation",
+    cancelledOn: (date: string, by: string) => `Cancelled on ${date} by ${by}`,
+    refundNoteLabel: "Refund note",
+    reasonLabel: "Reason shown to the family and the academy",
+    none: "None",
+    systemBy: "the system",
+  },
+  // commission
+  commission: {
+    title: "Commission",
+    sub: "Golafly’s share of each payment, taken from the academy’s payout, never added to the family’s price",
+    defaultRate: "Default rate",
+    defaultHint: "Applies to every organization without its own rate.",
+    overrides: "Organization rates",
+    overridesEmpty:
+      "No organization has its own rate. The default applies to all.",
+    organization: "Organization",
+    rate: "Rate",
+    changedBy: (name: string, at: string) => `Changed by ${name} on ${at}`,
+    applyNote:
+      "A change applies to new enrollments only. Existing enrollments keep the rate they were created with.",
+    setTitle: "Set a rate for an organization",
+    pickOrg: "Organization",
+    pickOrgChoose: "Choose an organization",
+    rateLabel: "Commission rate (%)",
+    rateHint: "0 to 100, up to two decimals. 0 means no commission.",
+    rateInvalid: "Enter a number from 0 to 100 with at most two decimals.",
+    orgRequired: "Choose an organization.",
+    save: "Save rate",
+    clear: "Use the default",
+    clearTitle: "Go back to the default rate?",
+    clearText: (org: string, rate: number) =>
+      `${org} will use the default rate of ${rate}% on new enrollments.`,
+    saved: "Saved. It applies to new enrollments only.",
+    cancel: "Cancel",
+    edit: "Change rate",
+    unknownAdmin: "Golafly",
+  },
+} as const

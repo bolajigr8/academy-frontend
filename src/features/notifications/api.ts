@@ -19,6 +19,21 @@ export type ApiNotificationType =
   | "listing_taken_down"
   | "academy_verified"
   | "academy_verification_needs_attention"
+  // week 3 part 1 (target: the application)
+  | "enrollment_payment_due"
+  | "enrollment_confirmed"
+  | "player_enrolled"
+  | "enrollment_payment_overdue"
+  | "player_payment_overdue"
+  | "enrollment_expired"
+  | "player_enrollment_expired"
+  // week 3 part 2
+  | "review_published"
+  | "review_rejected"
+  | "review_removed"
+  | "review_received"
+  | "enrollment_cancelled"
+  | "player_enrollment_cancelled"
 
 export type ApiNotification = {
   id: string

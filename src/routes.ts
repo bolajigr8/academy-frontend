@@ -93,6 +93,12 @@ export const routes = {
     organization: (id: number | string) =>
       `/admin/organizations/${encodeURIComponent(String(id))}`,
     users: "/admin/users",
+    // week 3 part 2
+    reviews: "/admin/reviews",
+    enrollments: "/admin/enrollments",
+    enrollment: (id: number | string) =>
+      `/admin/enrollments/${encodeURIComponent(String(id))}`,
+    commission: "/admin/commission",
   },
   club: {
     dashboard: "/club/dashboard",

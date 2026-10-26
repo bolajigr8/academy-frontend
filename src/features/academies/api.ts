@@ -137,7 +137,9 @@ export type ApiSearchCard = {
   is_sponsored: boolean
 }
 
-export type SearchSort = "relevance" | "price_asc" | "price_desc" | "start_date"
+/** week 3 part 2 added "rating" (the best rated academy first) */
+export type SearchSort =
+  "relevance" | "price_asc" | "price_desc" | "start_date" | "rating"
 
 /**
  * GET /academy/search query (section 14). Every filter is optional and they

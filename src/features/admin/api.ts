@@ -1,5 +1,10 @@
 import type { ApiVerificationDocument } from "@/features/club/api"
 import type { ApiThreadItem } from "@/features/messages/api"
+import type {
+  ApiEnrollmentPayment,
+  ApiEnrollmentSummary,
+} from "@/features/enrollments/api"
+import type { ApiOwnReview } from "@/features/reviews/api"
 import { apiClient } from "@/lib/api/client"
 import type { ApiMoney, ApiPage, ApiResponse } from "@/lib/api/types"
 import type {
@@ -293,3 +298,232 @@ export async function getAdminApplication(
 }
 
 export type { ApiIntake, ApiMoney }
+
+/* ---------------- week 3 part 2: reviews (section 11) ---------------- */
+
+/** A review with who and what it is about (admin only: the author's account) */
+export type AdminReview = ApiOwnReview & {
+  listing: { id: number; title: string; slug: string }
+  academy: { id: number; name: string }
+  enrollment: { id: number; application_reference: string | null }
+  author_account: { id: string; name: string; email: string }
+  /** who decided last; null before any decision */
+  reviewed_by: { admin_id: number; name: string; at: string } | null
+}
+
+export type AdminReviewsPage = Page<AdminReview> & {
+  meta: Page<AdminReview>["meta"] & {
+    status_counts: Record<"pending" | "published" | "rejected", number>
+  }
+}
+
+/** GET /academy/admin/reviews (newest submitted first; status_counts for the tabs) */
+export async function listAdminReviews(
+  params: {
+    status?: "pending" | "published" | "rejected"
+    academy_id?: number
+    listing_id?: number
+    page?: number
+    per_page?: number
+  } = {}
+): Promise<AdminReviewsPage> {
+  const res = await apiClient.get<AdminReviewsPage>("/academy/admin/reviews", {
+    params: { per_page: 20, ...params },
+  })
+  return res.data
+}
+
+/** POST …/reviews/{id}/publish: a pending review becomes public; the rating is recomputed */
+export async function publishReview(id: number): Promise<AdminReview> {
+  const res = await apiClient.post<ApiResponse<AdminReview>>(
+    `/academy/admin/reviews/${id}/publish`
+  )
+  return res.data.data
+}
+
+/** POST …/reviews/{id}/reject {reason}: rejects a pending one or takes a published one down (final) */
+export async function rejectReview(
+  id: number,
+  reason: string
+): Promise<AdminReview> {
+  const res = await apiClient.post<ApiResponse<AdminReview>>(
+    `/academy/admin/reviews/${id}/reject`,
+    { reason: reason.trim() }
+  )
+  return res.data.data
+}
+
+/* ---------------- week 3 part 2: enrollments (section 14) ---------------- */
+
+/** A paid row's money as the backend may send it: a money object or minor units */
+export type AdminMoneyish = ApiMoney | number | string | null
+
+export type AdminEnrollmentPayment = ApiEnrollmentPayment & {
+  /** filled when the row is paid (part 3): Golafly's share */
+  commission?: AdminMoneyish
+  /** filled when paid: what the academy is owed */
+  academy_net?: AdminMoneyish
+  /** filled when paid: one EUR buys this much of the row's currency */
+  eur_rate?: string | number | null
+}
+
+export type AdminEnrollment = ApiEnrollmentSummary & {
+  application: { id: number; reference: string | null; status: string }
+  listing: {
+    id?: number
+    title: string
+    slug: string
+    academy: { id: number; name: string }
+  }
+  applicant: { id: string; name: string; email: string; relationship: string }
+  organization: { id: number; name: string }
+  /** the percent frozen on the enrollment when it was created */
+  commission_rate: number
+  cancellation: {
+    cancelled_at: string
+    reason: string
+    /** admins only */
+    refund_note: string | null
+    by: { type: "applicant" | "system" | "admin"; name: string | null }
+  } | null
+}
+
+export type AdminEnrollmentDetail = AdminEnrollment & {
+  payments: AdminEnrollmentPayment[]
+}
+
+export type AdminEnrollmentsPage = Page<AdminEnrollment> & {
+  meta: Page<AdminEnrollment>["meta"] & {
+    status_counts: Record<"pending" | "confirmed" | "cancelled", number>
+  }
+}
+
+/** GET /academy/admin/enrollments (newest first; search by reference or name) */
+export async function listAdminEnrollments(
+  params: {
+    status?: "pending" | "confirmed" | "cancelled"
+    organization_id?: number
+    academy_id?: number
+    search?: string
+    page?: number
+    per_page?: number
+  } = {}
+): Promise<AdminEnrollmentsPage> {
+  const res = await apiClient.get<AdminEnrollmentsPage>(
+    "/academy/admin/enrollments",
+    { params: { per_page: 20, ...params } }
+  )
+  return res.data
+}
+
+/** GET /academy/admin/enrollments/{id}: with the schedule, commission and payout */
+export async function getAdminEnrollment(
+  id: number
+): Promise<AdminEnrollmentDetail> {
+  const res = await apiClient.get<ApiResponse<AdminEnrollmentDetail>>(
+    `/academy/admin/enrollments/${id}`
+  )
+  return res.data.data
+}
+
+/**
+ * POST …/enrollments/{id}/cancel {reason, refund_note?}: pending or confirmed,
+ * whatever was paid. reason is shown to the family and the academy; the
+ * refund note stays with Golafly. Refunds are made by hand.
+ */
+export async function cancelAdminEnrollment(
+  id: number,
+  body: { reason: string; refund_note?: string }
+): Promise<AdminEnrollmentDetail> {
+  const res = await apiClient.post<ApiResponse<AdminEnrollmentDetail>>(
+    `/academy/admin/enrollments/${id}/cancel`,
+    {
+      reason: body.reason.trim(),
+      ...(body.refund_note?.trim()
+        ? { refund_note: body.refund_note.trim() }
+        : {}),
+    }
+  )
+  return res.data.data
+}
+
+/* ---------------- week 3 part 2: commission (section 15) ---------------- */
+
+export type AdminSettings = {
+  default_rate: number
+  overrides: {
+    organization_id: number
+    organization_name: string
+    commission_rate: number
+    updated_at: string
+    updated_by: string | null
+  }[]
+}
+
+export async function getAdminSettings(): Promise<AdminSettings> {
+  const res = await apiClient.get<ApiResponse<AdminSettings>>(
+    "/academy/admin/settings"
+  )
+  return res.data.data
+}
+
+/** POST /academy/admin/settings: a rate 0-100 (2 decimals) sets an override; null clears it */
+export async function saveCommission(
+  organizationId: number,
+  rate: number | null
+): Promise<{ settings: AdminSettings; message: string }> {
+  const res = await apiClient.post<ApiResponse<AdminSettings>>(
+    "/academy/admin/settings",
+    { organization_id: organizationId, commission_rate: rate }
+  )
+  return { settings: res.data.data, message: res.data.message }
+}
+
+/* ---------------- week 3 part 2: the marketplace overview (section 16) ---------------- */
+
+export type AdminOverview = {
+  range: { from: string; to: string }
+  period: {
+    applications_submitted: number
+    application_response_rate: {
+      measured: number
+      answered: number
+      rate: number | null
+    }
+    repeat_applications: { applications: number; applicants: number }
+    searches: number
+    listing_views: number
+    new_players_and_parents: number
+    saved_listings_added: number
+    verified_reviews_added: number
+    revenue: {
+      currency: string
+      gmv_minor: number
+      commission_minor: number
+      unconverted: {
+        currency: string
+        paid_rows: number
+        gross_minor: number
+        commission_minor: number
+      }[]
+    }
+  }
+  snapshot: {
+    verified_academies: number
+    active_listings: number
+    registered_players_and_parents: number
+    saved_listings: number
+    verified_reviews: number
+  }
+}
+
+/** GET /academy/admin/overview (from / to, default the last 30 days) */
+export async function getAdminOverview(
+  range: { from?: string; to?: string } = {}
+): Promise<AdminOverview> {
+  const res = await apiClient.get<ApiResponse<AdminOverview>>(
+    "/academy/admin/overview",
+    { params: range }
+  )
+  return res.data.data
+}

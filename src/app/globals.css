@@ -700,3 +700,36 @@
     outline-offset: 3px;
   }
 }
+
+/*
+ * Admin tables on phones: each row becomes a card (header hidden, one cell
+ * per line, buttons included), so nothing hides off-screen to the right.
+ */
+@media (max-width: 720px) {
+  table.am-stack-sm thead {
+    display: none;
+  }
+  table.am-stack-sm,
+  table.am-stack-sm tbody {
+    display: block;
+    width: 100%;
+  }
+  table.am-stack-sm tr {
+    display: grid;
+    gap: 6px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-1);
+  }
+  table.am-stack-sm td {
+    display: block;
+    padding: 0;
+    text-align: left;
+    white-space: normal;
+  }
+}
+@media (max-width: 720px) {
+  /* an empty cell's dash means nothing without its column heading */
+  table.am-stack-sm .am-dash {
+    display: none;
+  }
+}

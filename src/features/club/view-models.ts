@@ -211,7 +211,8 @@ export function rowFromApi(
             next.places_left === null ? null : placesLabel(next.places_left),
         }
       : null,
-    views: null,
+    // week 3 part 2: views over the last 30 days (list only)
+    views: l.recent_views ?? null,
     applications: l.applications_count ?? null,
     completeness: apiCompleteness(l),
     editHref: links.editor ? routes.club.editListing(String(l.id)) : null,

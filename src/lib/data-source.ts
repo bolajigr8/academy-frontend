@@ -10,6 +10,8 @@ import { env } from "./env"
  * its batch lands; then flip it to true here.
  */
 export type DataArea =
+  /** the academy dashboard, reviews, admin enrollments / commission / overview (week 3 part 2) */
+  | "dashboards"
   /** register, login, the session (batch 1) */
   | "auth"
   /** academy portal: organization, academy profile, listings list (batch 1) */
@@ -41,7 +43,8 @@ const READY: Record<DataArea, boolean> = {
   academyInbox: true,
   applications: true,
   messages: true,
-  payments: false,
+  payments: true,
+  dashboards: true,
 }
 
 /** "api" only when it was not switched off AND an API URL is configured */
@@ -77,11 +80,7 @@ export const DEMO_CHROME = !API_MODE
  * wired yet). Each shows a "Sample data" notice so nobody mistakes it for real
  * data. Remove an entry when its delivery lands.
  */
-const SAMPLE_PAGES: { path: string; exact?: boolean }[] = [
-  { path: "/club/dashboard" }, // week 3 dashboards
-  { path: "/club/payments" }, // week 3
-  { path: "/family/payments" }, // week 3
-]
+const SAMPLE_PAGES: { path: string; exact?: boolean }[] = []
 
 export function pageOnSampleData(pathname: string): boolean {
   if (!API_MODE) return false

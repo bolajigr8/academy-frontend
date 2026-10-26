@@ -57,7 +57,7 @@ export const LIVE = {
     scheduleHint:
       "Times or a short note for each training day. Leave other days empty.",
     scheduleExample:
-      "For example: Monday “17:00–19:00 training”, Wednesday “17:00–19:00 training”, Saturday “Match day”. Rest days stay empty.",
+      "For example: Monday “17:00–19:00 training”, Wednesday “17:00–19:00 training”, Saturday “Match day”. Leave rest days empty.",
     schedulePlaceholder: "e.g. 17:00–19:00 training",
     /** optional_services is a list of text in the API (no price field, contract section 6) */
     optionalHint:
@@ -480,20 +480,261 @@ export const LIVE = {
    * academy sees the standard text and can keep it or write its own.
    */
   offer: {
-    useStandard: "Send our standard offer message",
-    standardLabel: "The family will receive:",
-    ownLabel: "Your message to the family",
+    ownLabel: "Message to the family",
     ownHint:
-      "Edit the standard message or write your own. Up to 2,000 characters.",
+      "Filled in from the application. Read it, then change anything before you send it.",
+    resetStandard: "Use the standard message",
     standard: (player: string, program: string, start: string) =>
-      `Congratulations! We are pleased to offer ${player} a place in the ${program}, starting ${start}. We will be in touch soon with the next steps.`,
-    empty: "Write a message, or send the standard one.",
+      `Congratulations! We are pleased to offer ${player} a place in ${program}, starting ${start}. We will be in touch soon with the next steps.`,
+    empty: "Write a message to the family.",
+  },
+  /** Week 3 part 2, sections 10 to 12: reviews */
+  reviews: {
+    categories: {
+      training: "Training",
+      communication: "Communication",
+      facilities: "Facilities",
+      organization: "Organization",
+    } as Record<string, string>,
+    stars: (n: number) => (n === 1 ? "1 star" : `${n} stars`),
+    // the family
+    writeTitle: "How was it?",
+    writeLead: (academy: string) =>
+      `Rate ${academy} and tell other families what to expect. Golafly checks each review before it goes public; your name shows as first name and initial.`,
+    body: "Your review",
+    bodyHint: "10 to 2,000 characters",
+    send: "Send review",
+    sent: "Review sent. It will appear once Golafly has checked it.",
+    chooseRating: "Choose from 1 to 5 stars",
+    bodyShort: "Write at least 10 characters",
+    yours: "Your review",
+    status: {
+      pending: "Waiting for Golafly’s check",
+      published: "Published",
+      rejected: "Not published",
+    } as Record<string, string>,
+    rejectedWhy: (reason: string) => `Golafly’s reason: ${reason}`,
+    academyReplied: "The academy’s reply",
+    // public
+    title: "Reviews",
+    verified: "Verified enrollment",
+    none: "No reviews yet. Reviews come from families with a confirmed enrollment.",
+    based: (n: number) => (n === 1 ? "from 1 review" : `from ${n} reviews`),
+    more: "Show more reviews",
+    replyFrom: (academy: string) => `Reply from ${academy}`,
+    // the academy
+    portalTitle: "Reviews",
+    portalSub:
+      "Published reviews of your programs. You can reply once to each, publicly.",
+    tabs: { reply: "To answer", all: "All" } as Record<string, string>,
+    replyLabel: "Your public reply",
+    replyHint:
+      "Shown under the review. One reply per review; it cannot be edited.",
+    replySend: "Publish reply",
+    replied: "Reply published.",
+    replyEmpty: "Write a reply.",
+    noneToAnswer: "No review is waiting for a reply.",
+    noneYet: "No published reviews yet.",
+  },
+  /** Week 3 part 2, section 13: the academy dashboard from the backend */
+  dashboard: {
+    ranges: [
+      { days: 7, label: "Last 7 days" },
+      { days: 30, label: "Last 30 days" },
+      { days: 90, label: "Last 90 days" },
+    ],
+    rangeLabel: "Period",
+    received: "received",
+    enrolledSub: "players confirmed",
+    conversionSub: (applications: number, views: number) =>
+      `${applications} ${applications === 1 ? "application" : "applications"} from ${views} ${views === 1 ? "view" : "views"}`,
+    noViews: "no views yet",
+    enrollRate: (rate: number | null) =>
+      rate === null ? "" : `${rate}% of applications enrolled`,
+    revenueNone: "Nothing paid yet",
+    revenueSub: "after Golafly’s fee",
+    revenueSoon: "online payments arrive with the next update",
+    viewsSub: "the last 8 weeks",
+    reviewsToAnswer: "Reviews to answer",
+    reviewsToAnswerSub: "Published reviews waiting for your reply",
+    noReviewsToAnswer: "No review is waiting for a reply.",
+    answer: "Reply",
+    allReviews: "All reviews",
+    verification: {
+      verified: "is Golafly Verified.",
+      club_academy: "is a Club Academy.",
+      pending: "is waiting for Golafly’s check.",
+      rejected: "could not be verified yet: see the note on your profile.",
+    } as Record<string, string>,
+    capacityNone: "No start dates with a place limit yet.",
+    weekOf: (date: string) => `Week of ${date}`,
+  },
+  /**
+   * Week 3 part 1: enrollment and the payment schedule. Paying itself arrives
+   * in part 3, so no screen offers a Pay button yet.
+   */
+  enrollment: {
+    kinds: {
+      registration_fee: "Registration fee",
+      deposit: "Deposit",
+      full: "Full payment",
+      balance: "Balance",
+      installment: "Instalment",
+      extra: "Extra",
+    } as Record<string, string>,
+    paymentStatus: {
+      scheduled: "Upcoming",
+      due: "Due now",
+      paid: "Paid",
+      overdue: "Overdue",
+      cancelled: "Cancelled",
+    } as Record<string, string>,
+    status: {
+      pending: "Waiting for payment",
+      confirmed: "Enrolled",
+      cancelled: "Cancelled",
+    } as Record<string, string>,
+    plans: {
+      full: "Everything at once",
+      deposit_balance: "Deposit now, balance later",
+      installments: "Deposit now, then instalments",
+    } as Record<string, string>,
+    planHints: {
+      full: "The registration fee, the full price and any extras, all due within 7 days.",
+      deposit_balance:
+        "The registration fee, the deposit and any extras within 7 days; the balance on the date you pick.",
+      installments:
+        "The registration fee, the deposit and any extras within 7 days; the rest in instalments on the dates you pick.",
+    } as Record<string, string>,
+    // the move (academy)
+    move: "Move to enrollment",
+    moveTitle: "Move to enrollment",
+    moveLead: (first: string) =>
+      `Choose how the family pays. The amounts come from the listing; ${first}’s place is held as soon as you send it, and the family has 7 days for the first payment.`,
+    plan: "Payment plan",
+    balanceDate: "Balance due on",
+    installmentsTitle: "Instalments",
+    installmentAmount: (n: number) => `Instalment ${n} amount`,
+    installmentDate: (n: number) => `Instalment ${n} due on`,
+    addInstallment: "Add an instalment",
+    remove: "Remove",
+    left: (amount: string) => `Left to schedule: ${amount}`,
+    over: (amount: string) =>
+      `Over the price by ${amount}: lower an instalment`,
+    extrasTitle: "Extras (optional)",
+    extrasHint:
+      "Added on top of the price and due within 7 days, for example an airport transfer.",
+    extraLabel: "What it is",
+    extraAmount: "Amount",
+    addExtra: "Add an extra",
+    preview: "The family will be asked to pay",
+    dueNow: "Within 7 days",
+    total: "Total",
+    confirmsPlace: "Confirms place",
+    free: "This listing has nothing to pay: the player is enrolled as soon as you send it.",
+    send: "Send the payment schedule",
+    planOnlyFull:
+      "This listing has no deposit smaller than its price, so only full payment is available.",
+    // the enrollment (both sides)
+    title: "Enrollment",
+    paid: "Paid",
+    outstanding: "Still to pay",
+    // the family is the one who pays; the academy only waits for it
+    payBy: (date: string) =>
+      `Pay what is due now by ${date} to keep your place.`,
+    familyDeadline: (date: string) =>
+      `The family has until ${date} to pay what is due now. The place is held for them until then.`,
+    familyPaysBy: (date: string) => `Family pays by ${date}`,
+    /** the family's status line while waiting for payment (any plan, deposit or not) */
+    pendingFamily: "Pay what is due now to confirm the place.",
+    // paying arrives in part 3: the button is there, and says so when pressed
+    payNow: "Pay now",
+    payNotYet: (date: string | null) =>
+      date
+        ? `Online payment isn’t available yet. Your place is held until ${date}.`
+        : "Online payment isn’t available yet.",
+    goPayments: "Go to Payments",
+    viewApplication: "View application",
+    cardNext: "Next: move to enrollment",
+    viewAndPay: "View and pay",
+    acceptedBanner: (n: number) =>
+      n === 1
+        ? "1 accepted player is waiting for a payment schedule. Open the card in Accepted and choose Move to enrollment."
+        : `${n} accepted players are waiting for a payment schedule. Open a card in Accepted and choose Move to enrollment.`,
+    showAccepted: "Show accepted",
+    acceptedNext: "Next: send the family a payment schedule to hold the place.",
+    confirmedOn: (date: string) => `Enrolled on ${date}.`,
+    cancelledOn: (date: string, reason: string | null) =>
+      `Cancelled on ${date}${reason ? `: ${reason}` : ""}.`,
+    schedule: "Payment schedule",
+    payment: "Payment",
+    due: "Due",
+    status_: "Status",
+    amount: "Amount",
+    paidOn: (date: string) => `Paid ${date}`,
+    noRows: "Nothing to pay.",
+    startsOn: (date: string) => `Starts ${date}`,
+    // academy list
+    tabs: {
+      pending: "Waiting for payment",
+      confirmed: "Enrolled",
+      cancelled: "Cancelled",
+    } as Record<string, string>,
+    listTitle: "Payments",
+    listSub:
+      "Enrollments: the players you moved to enrollment and their payment schedules",
+    scheduleShort: "Schedule",
+    searchLabel: "Search by family or player",
+    allListings: "All listings",
+    empty:
+      "No enrollments here yet. Move an accepted application to enrollment from its page.",
+    player: "Player",
+    familyCol: "Family",
+    program: "Program",
+    open: "Open",
+    // family payments page
+    kpiDue: "Due now",
+    kpiDueSub: "due or overdue",
+    kpiUpcoming: "Upcoming",
+    kpiUpcomingSub: "later in the schedule",
+    kpiPaid: "Paid",
+    kpiPaidSub: "so far",
+    kpiEnrollments: "Enrollments",
+    kpiEnrollmentsSub: "waiting or confirmed",
+    cancelPending:
+      "The payment schedule is cancelled and the place held for you goes back to the academy.",
+    howPoints: [
+      "When an academy offers a place, it sends a payment schedule: the registration fee, the full price or a deposit, and any extras.",
+      "What is due now must be paid within 7 days, or the place is released.",
+      "Later payments keep their dates; you are reminded a week before each one.",
+      "You can withdraw before paying anything. Once a payment is made, Golafly handles any cancellation.",
+    ],
+    paymentsEmpty:
+      "No payments yet. When an academy offers a place, its payment schedule appears here.",
+    errors: {
+      planNotAvailable:
+        "This listing has no deposit smaller than its price, so only full payment is available.",
+      balanceDate: "Choose when the balance is due",
+      date: (deadline: string, end: string | null) =>
+        end
+          ? `Pick a date after ${deadline} and no later than ${end} (the end of the intake)`
+          : `Pick a date after ${deadline} (the first-payment deadline)`,
+      installmentsNone: "Add at least one instalment",
+      installmentsMax: "Up to 24 instalments",
+      installmentDate: "Choose when this instalment is due",
+      amount: "Enter an amount, for example 250 or 250.50",
+      mustAddUp: (amount: string) =>
+        `The instalments must add up to ${amount} (the price minus the deposit)`,
+      extrasMax: "Up to 10 extras",
+      extraLabel: "Say what the extra is",
+      extraLabelLong: "Up to 100 characters",
+    },
   },
   /** Added (week 2 part 1, section 5): moving a draft to another start date */
   changeIntake: {
     open: "Change",
     title: "Change the start date",
-    lead: "Pick another start date of this program. The answers and documents you added stay.",
+    lead: "Pick another start date of this program. The answers and documents you added are kept.",
     label: "Start date",
     save: "Save start date",
     cancel: "Cancel",
@@ -542,14 +783,14 @@ export const LIVE = {
     submit: "Send application",
     submitted: "Application sent to the academy.",
     infoLead: "The academy asked for more information:",
-    respondNote: "Message to the academy (optional)",
+    respondNote: "Message to the academy",
     respond: "Send back to the academy",
     responded: "Sent back to the academy.",
     cancel: "Withdraw application",
     cancelTitle: "Withdraw this application?",
     cancelText:
       "The academy will be told. You can apply again later if the intake is still open.",
-    cancelReason: "Reason (optional)",
+    cancelReason: "Reason",
     cancelConfirm: "Withdraw",
     keep: "Keep it",
     cancelled: "Application withdrawn.",

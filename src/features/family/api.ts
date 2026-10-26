@@ -1,4 +1,5 @@
 import { resolveBackendUrl } from "@/lib/api/assets"
+import type { ApiFamilyEnrollmentBlock } from "@/features/enrollments/api"
 import { apiClient } from "@/lib/api/client"
 import type { ApiPage, ApiResponse } from "@/lib/api/types"
 
@@ -274,6 +275,11 @@ export type ApiApplication = {
   travel?: ApiTravel | null
   created_at: string
   updated_at: string
+  /**
+   * Week 3 part 1, section 1: id and status of the enrollment once the
+   * academy moved the application to enrollment. ABSENT before that.
+   */
+  enrollment?: ApiFamilyEnrollmentBlock
 }
 
 export type ApiAppSummary = {

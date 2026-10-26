@@ -42,6 +42,8 @@ type Props = {
   hint?: string
   error?: string
   required?: boolean
+  /** false for filters and choosers, where "Optional" means nothing */
+  optionalMarker?: boolean
   className?: string
   /** receives the id and ARIA wiring for the control */
   children: (control: ControlProps) => ReactNode
@@ -54,6 +56,7 @@ export function FormField({
   hint,
   error,
   required,
+  optionalMarker = true,
   className,
   children,
 }: Props) {
@@ -65,7 +68,7 @@ export function FormField({
     <div className={cn("grid min-w-0 gap-1.5", className)}>
       <Label htmlFor={id}>
         {label}
-        {!required && (
+        {!required && optionalMarker && (
           <span className="ml-1 text-fs-12 font-medium text-fg-3">
             Optional
           </span>

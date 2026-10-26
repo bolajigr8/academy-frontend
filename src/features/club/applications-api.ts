@@ -1,3 +1,7 @@
+import type {
+  ApiAcademyEnrollmentBlock,
+  MoveToEnrollmentBody,
+} from "@/features/enrollments/api"
 import { apiClient } from "@/lib/api/client"
 import type { ApiMoney, ApiPage, ApiResponse } from "@/lib/api/types"
 import type {
@@ -69,6 +73,11 @@ export type ApiApplicant = {
     id: number
     label?: string | null
     start_date: string
+    /** later payment dates may not be after it (week 3 part 1, section 2) */
+    end_date?: string | null
+    applications_open_at?: string | null
+    application_deadline?: string | null
+    status?: string
     places_left?: number | null
   }
   questions: ApiAppQuestion[]
@@ -80,6 +89,11 @@ export type ApiApplicant = {
   submitted_at: string | null
   decided_at: string | null
   timeline: ApiTimelineEntry[]
+  /**
+   * Week 3 part 1, section 6: the whole enrollment once the application was
+   * moved to enrollment. The key is ABSENT before that: test for it.
+   */
+  enrollment?: ApiAcademyEnrollmentBlock
 }
 
 const path = (id: number) => `/academy/portal/applications/${id}`
@@ -162,6 +176,24 @@ export async function acceptApplication(
 }
 
 /** POST …/reject {reason}: the chosen reason and the optional note as one text */
+/**
+ * POST …/applications/{id}/move-to-enrollment (week 3 part 1, section 2): an
+ * accepted application becomes enrollment_pending (or enrolled at once when
+ * the listing has nothing to pay). Refusals: errors.current_status (not
+ * accepted), errors.reason plan_not_available / invalid_schedule /
+ * intake_full, or field errors (balance_due_date, installments.N.*, extras.N.*).
+ */
+export async function moveToEnrollment(
+  id: number,
+  body: MoveToEnrollmentBody
+): Promise<{ application: ApiApplicant; message: string }> {
+  const res = await apiClient.post<ApiResponse<ApiApplicant>>(
+    `${path(id)}/move-to-enrollment`,
+    body
+  )
+  return { application: res.data.data, message: res.data.message }
+}
+
 export async function rejectApplication(
   id: number,
   reason: string

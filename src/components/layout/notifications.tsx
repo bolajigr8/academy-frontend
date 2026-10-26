@@ -169,15 +169,29 @@ function DemoNotifications({ persona }: { persona: Persona }) {
 const liveIcon = (type: string): IconName =>
   type === "new_message"
     ? "chat"
-    : type === "application_accepted" ||
-        type === "listing_approved" ||
-        type === "academy_verified"
-      ? "checkcircle"
-      : type === "information_requested" ||
-          type === "listing_changes_needed" ||
-          type === "academy_verification_needs_attention"
-        ? "alert"
-        : "bell"
+    : type === "review_published" || type === "review_received"
+      ? "star"
+      : type === "enrollment_payment_due"
+        ? "wallet"
+        : type === "application_accepted" ||
+            type === "listing_approved" ||
+            type === "academy_verified" ||
+            type === "enrollment_confirmed" ||
+            type === "player_enrolled"
+          ? "checkcircle"
+          : type === "information_requested" ||
+              type === "listing_changes_needed" ||
+              type === "academy_verification_needs_attention" ||
+              type === "enrollment_payment_overdue" ||
+              type === "player_payment_overdue" ||
+              type === "enrollment_expired" ||
+              type === "player_enrollment_expired" ||
+              type === "review_rejected" ||
+              type === "review_removed" ||
+              type === "enrollment_cancelled" ||
+              type === "player_enrollment_cancelled"
+            ? "alert"
+            : "bell"
 
 /** The screen a notification opens (section 15: target {type, id}) */
 function liveHref(n: ApiNotification, persona: Persona): string | null {
@@ -196,6 +210,13 @@ function liveHref(n: ApiNotification, persona: Persona): string | null {
   if (t.type === "listing" && persona === "club")
     return routes.club.editListing(id)
   if (t.type === "academy" && persona === "club") return routes.club.profile
+  // week 3: an enrollment opens the payments page; a review, where it is answered or shown
+  if (t.type === "enrollment")
+    return persona === "club" ? routes.club.payments : routes.family.payments
+  if (t.type === "review")
+    return persona === "club"
+      ? `${routes.club.profile}#review-${encodeURIComponent(id)}`
+      : routes.family.applications
   return null
 }
 
