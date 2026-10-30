@@ -51,7 +51,12 @@ const day = (iso: string) => DATES.fmt(iso.slice(0, 10))
  * the backend's. Each row opens the applicant page, which shows the schedule.
  * Golafly's commission and payouts arrive with part 3.
  */
-export function LivePortalEnrollments() {
+export function LivePortalEnrollments({
+  embedded = false,
+}: {
+  /** inside the Payments page: no heading of its own */
+  embedded?: boolean
+} = {}) {
   const [status, setStatus] = useState<EnrollmentStatus>("pending")
   const [listingId, setListingId] = useState("")
   const [typed, setTyped] = useState("")
@@ -89,7 +94,9 @@ export function LivePortalEnrollments() {
 
   return (
     <>
-      <PageHeading title={t.listTitle} subtitle={t.listSub} />
+      {embedded ? null : (
+        <PageHeading title={t.listTitle} subtitle={t.listSub} />
+      )}
       <div
         role="tablist"
         aria-label={t.listTitle}

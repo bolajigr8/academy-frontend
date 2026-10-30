@@ -19,7 +19,11 @@ import type {
   ApiEnrollmentPayment,
   ApiFamilyPayment,
 } from "@/features/enrollments/api"
-import { PAYMENT_TONE, withLabels } from "@/features/enrollments/logic"
+import {
+  PAYMENT_TONE,
+  sumByCurrency,
+  withLabels,
+} from "@/features/enrollments/logic"
 import { formatMoney } from "@/lib/money"
 
 const t = LIVE.enrollment
@@ -35,32 +39,53 @@ export function ScheduleTable({
   rows,
   appHref,
   onPay,
+  payingKey = null,
 }: {
   rows: (ApiEnrollmentPayment | ApiFamilyPayment)[]
   /** the family's payments page: a column naming the program and the player */
   appHref?: (row: ApiFamilyPayment) => string
-  /** the family only: a Pay now button on each line due or overdue */
-  onPay?: (row: ApiEnrollmentPayment) => void
+  /**
+   * The family only: one Pay button per enrollment, on its first due line,
+   * paying every due or overdue line of that enrollment in one card payment
+   * (week 3 part 3, section 18)
+   */
+  onPay?: (rows: ApiEnrollmentPayment[]) => void
+  /** the enrollment being paid (the button shows it is busy) */
+  payingKey?: number | null
 }) {
   const actions = Boolean(onPay || appHref)
+  // due lines grouped by enrollment; the button sits on each group's first line
+  const groups = new Map<number, ApiEnrollmentPayment[]>()
+  for (const r of rows)
+    if (r.status === "due" || r.status === "overdue") {
+      const k = "enrollment_id" in r ? r.enrollment_id : 0
+      groups.set(k, [...(groups.get(k) ?? []), r])
+    }
+  const payButton = (r: ApiEnrollmentPayment) => {
+    if (!onPay) return null
+    const k = "enrollment_id" in r ? (r as ApiFamilyPayment).enrollment_id : 0
+    const group = groups.get(k)
+    if (!group || group[0].id !== r.id) return null
+    return (
+      <Button
+        size="sm"
+        aria-busy={payingKey === k || undefined}
+        onClick={() => onPay(group)}
+      >
+        {t.payAmount(sumByCurrency(group.map((x) => x.amount)))}
+      </Button>
+    )
+  }
   const named = withLabels(rows)
   const status = (r: (typeof named)[number]) => (
     <StatusPill tone={PAYMENT_TONE[r.status] ?? "ghost"}>
       {t.paymentStatus[r.status] ?? r.status}
     </StatusPill>
   )
-  const when = (r: (typeof named)[number]) =>
-    r.status === "paid" && r.paid_at
-      ? t.paidOn(DATES.fmt(r.paid_at.slice(0, 10)))
-      : DATES.fmt(r.due_date)
   const rowActions = (r: (typeof named)[number]) =>
     actions ? (
       <>
-        {onPay && (r.status === "due" || r.status === "overdue") ? (
-          <Button size="sm" onClick={() => onPay(r)}>
-            {t.payNow}
-          </Button>
-        ) : null}
+        {payButton(r)}
         {appHref && "enrollment_id" in r ? (
           <ButtonLink href={appHref(r)} variant="secondary" size="sm">
             {t.viewApplication}
@@ -90,7 +115,12 @@ export function ScheduleTable({
             </div>
             <div className="flex flex-wrap items-center gap-2 text-fs-13 text-fg-2">
               {status(r)}
-              <span>{when(r)}</span>
+              {/* the pill already says Paid: the date alone */}
+              <span>
+                {r.status === "paid" && r.paid_at
+                  ? DATES.fmt(r.paid_at.slice(0, 10))
+                  : DATES.fmt(r.due_date)}
+              </span>
               {r.required_for_enrollment &&
               r.status !== "paid" &&
               r.status !== "cancelled" ? (
@@ -160,12 +190,7 @@ export function ScheduleTable({
                   {actions ? (
                     <TableCell>
                       <span className="flex justify-end gap-1.5 whitespace-nowrap">
-                        {onPay &&
-                        (r.status === "due" || r.status === "overdue") ? (
-                          <Button size="sm" onClick={() => onPay(r)}>
-                            {t.payNow}
-                          </Button>
-                        ) : null}
+                        {payButton(r)}
                         {appHref && "enrollment_id" in r ? (
                           <ButtonLink
                             href={appHref(r)}

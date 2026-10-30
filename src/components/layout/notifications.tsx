@@ -171,7 +171,10 @@ const liveIcon = (type: string): IconName =>
     ? "chat"
     : type === "review_published" || type === "review_received"
       ? "star"
-      : type === "enrollment_payment_due"
+      : type === "enrollment_payment_due" ||
+          type === "enrollment_payment_received" ||
+          type === "player_payment_received" ||
+          type === "player_payout_sent"
         ? "wallet"
         : type === "application_accepted" ||
             type === "listing_approved" ||

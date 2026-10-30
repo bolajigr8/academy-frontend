@@ -1,4 +1,4 @@
-import { LivePortalEnrollments } from "@/components/enrollments/live-portal-enrollments"
+import { ClubPayments } from "@/components/enrollments/club-payments"
 import { isLive } from "@/lib/data-source"
 import type { Metadata } from "next"
 
@@ -7,6 +7,6 @@ import { ClubPaymentsClient } from "./client"
 export const metadata: Metadata = { title: "Payments · Academy" }
 
 export default function ClubPaymentsPage() {
-  // api mode: week 3 part 1 (GET /academy/portal/enrollments); payouts arrive in part 3
-  return isLive("payments") ? <LivePortalEnrollments /> : <ClubPaymentsClient />
+  // api mode: the money (week 3 part 3) and the enrollments (part 1)
+  return isLive("payments") ? <ClubPayments /> : <ClubPaymentsClient />
 }

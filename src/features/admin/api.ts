@@ -200,6 +200,12 @@ export type AdminOrganization = ApiOrganization & {
     verification_status: VerificationStatus
     listings_count: number
   }[]
+  /** week 3 part 4, section 26: the organization's payout account */
+  payout_account_status?:
+    "none" | "onboarding" | "restricted" | "ready" | "disconnected"
+  payout_account_disabled_reason?: string | null
+  /** the single organization only (for support), never in the list */
+  stripe_account_id?: string | null
 }
 
 export async function listOrganizations(params: {

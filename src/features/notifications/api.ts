@@ -34,6 +34,11 @@ export type ApiNotificationType =
   | "review_received"
   | "enrollment_cancelled"
   | "player_enrollment_cancelled"
+  // week 3 part 3
+  | "enrollment_payment_received"
+  | "player_payment_received"
+  // week 3 part 4
+  | "player_payout_sent"
 
 export type ApiNotification = {
   id: string

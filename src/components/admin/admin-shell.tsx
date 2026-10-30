@@ -47,8 +47,10 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
   {
     href: routes.admin.enrollments,
     label: ADMIN.nav.enrollments,
-    icon: "wallet",
+    icon: "doc",
   },
+  // week 3 part 3
+  { href: routes.admin.payments, label: ADMIN.nav.payments, icon: "wallet" },
   { href: routes.admin.commission, label: ADMIN.nav.commission, icon: "euro" },
 ]
 

@@ -70,6 +70,8 @@ export const routes = {
     application: (id: string) => `/family/applications/${enc(id)}`,
     saved: "/family/saved",
     payments: "/family/payments",
+    /** where Stripe's return address forwards (week 3 part 3) */
+    paymentReturn: "/family/payments/return",
     /** account/messages.html?thread= */
     messages: (thread?: string) => withQuery("/family/messages", { thread }),
   },
@@ -99,6 +101,7 @@ export const routes = {
     enrollment: (id: number | string) =>
       `/admin/enrollments/${encodeURIComponent(String(id))}`,
     commission: "/admin/commission",
+    payments: "/admin/payments",
   },
   club: {
     dashboard: "/club/dashboard",

@@ -18,6 +18,7 @@ export const ADMIN = {
     reviews: "Reviews",
     enrollments: "Enrollments",
     commission: "Commission",
+    payments: "Payments",
   },
   login: {
     title: "Admin sign in",
@@ -323,6 +324,15 @@ export const ADMIN = {
     unconverted: (list: string) => `Not converted (no rate): ${list}`,
     now: "Right now",
     activity: "Marketplace activity",
+    /** the names under the chart's columns */
+    short: {
+      searches: "Searches",
+      views: "Views",
+      applications: "Applications",
+      newAccounts: "New accounts",
+      saved: "Saved",
+      reviews: "Reviews",
+    },
     activitySub: "What families did in the period, from searching to reviewing",
     verifiedAcademies: "Verified academies",
     activeListings: "Active listings",

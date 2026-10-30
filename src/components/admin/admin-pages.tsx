@@ -7,7 +7,7 @@ import { useEffect, useState, type ReactNode } from "react"
 
 import { PasswordInput } from "@/components/auth/password-input"
 import { Icon } from "@/components/icons/icon"
-import { BarChart } from "@/components/shared/bar-chart"
+import { ActivityChart } from "@/components/shared/activity-chart"
 import { CardBlock } from "@/components/shared/card-block"
 import { CheckField } from "@/components/shared/check-field"
 import { DocItem, DocList } from "@/components/shared/doc-list"
@@ -69,6 +69,7 @@ import {
   type VerificationStatus,
 } from "@/features/admin/api"
 import { adminKeys } from "@/features/admin/query-keys"
+import { listTransactions, paymentKeys } from "@/features/payments/api"
 import { startAdminSession } from "@/features/auth/session"
 import { downloadPrivateFile } from "@/features/family/api"
 import { apiFeeLabel } from "@/features/club/view-models"
@@ -103,7 +104,7 @@ const TONE: Record<string, StatusTone> = {
 }
 
 const ADMIN_PAGES =
-  /^\/admin(\/(verifications|listings|applications|organizations|enrollments)(\/\d+)?|\/(users|reviews|commission))?\/?(\?.*)?$/
+  /^\/admin(\/(verifications|listings|applications|organizations|enrollments)(\/\d+)?|\/(users|reviews|commission|payments))?\/?(\?.*)?$/
 
 /** A ?next= address after admin sign-in: only the admin's own pages */
 export function safeAdminNext(next: string | null | undefined): string | null {
@@ -494,6 +495,15 @@ export function AdminOverviewClient() {
     queryKey: adminKeys.reviews({ status: "pending", per_page: 3 }),
     queryFn: () => listAdminReviews({ status: "pending", per_page: 3 }),
   })
+  // week 3 part 3: card payments taken but not applied (refund by hand)
+  const refunds = useQuery({
+    queryKey: paymentKeys.transactions({
+      fulfilment_status: "refund_due",
+      per_page: 100,
+    }),
+    queryFn: () =>
+      listTransactions({ fulfilment_status: "refund_due", per_page: 100 }),
+  })
   const [days, setDays] = useState(30)
   const range = days === 30 ? {} : { from: addDays(todayISO(), -(days - 1)) }
   const market = useQuery({
@@ -616,6 +626,20 @@ export function AdminOverviewClient() {
             })),
             t.reviewReviews,
             routes.admin.reviews
+          )}
+          {queue(
+            "h-q-refunds",
+            LIVE.money.refundsTitle,
+            LIVE.money.refundsLead,
+            refunds.data ? refunds.data.data.length : "…",
+            (refunds.data?.data ?? []).slice(0, 3).map((r) => ({
+              key: r.id,
+              label: `${r.email} · ${r.amount}`,
+              sub: r.paid_for?.academy?.name ?? "",
+              href: `${routes.admin.payments}?view=refunds`,
+            })),
+            LIVE.money.reviewRefunds,
+            `${routes.admin.payments}?view=refunds`
           )}
         </div>
       </section>
@@ -786,16 +810,40 @@ function MarketplaceNumbers({
                 title={m.activity}
                 sub={m.activitySub}
               />
-              <BarChart
+              <ActivityChart
                 label={m.activity}
                 highlight={m.applications}
                 rows={[
-                  { label: m.searches, value: p.searches },
-                  { label: m.views, value: p.listing_views },
-                  { label: m.applications, value: p.applications_submitted },
-                  { label: m.newAccounts, value: p.new_players_and_parents },
-                  { label: m.saved, value: p.saved_listings_added },
-                  { label: m.reviews, value: p.verified_reviews_added },
+                  {
+                    label: m.searches,
+                    value: p.searches,
+                    short: m.short.searches,
+                  },
+                  {
+                    label: m.views,
+                    value: p.listing_views,
+                    short: m.short.views,
+                  },
+                  {
+                    label: m.applications,
+                    value: p.applications_submitted,
+                    short: m.short.applications,
+                  },
+                  {
+                    label: m.newAccounts,
+                    value: p.new_players_and_parents,
+                    short: m.short.newAccounts,
+                  },
+                  {
+                    label: m.saved,
+                    value: p.saved_listings_added,
+                    short: m.short.saved,
+                  },
+                  {
+                    label: m.reviews,
+                    value: p.verified_reviews_added,
+                    short: m.short.reviews,
+                  },
                 ]}
               />
             </CardBlock>
@@ -1435,6 +1483,7 @@ export function AdminOrganizationsClient() {
                 <TableHead>{t.owner}</TableHead>
                 <TableHead>{t.academies}</TableHead>
                 <TableHead>{t.listings}</TableHead>
+                <TableHead>{LIVE.payoutAccount.title}</TableHead>
                 <TableHead>{C.created}</TableHead>
               </TableRow>
             </TableHeader>
@@ -1461,6 +1510,12 @@ export function AdminOrganizationsClient() {
                   </TableCell>
                   <TableCell className="tabular-nums">
                     {o.listings_count}
+                  </TableCell>
+                  <TableCell>
+                    <PayoutAccountTag
+                      status={o.payout_account_status}
+                      reason={o.payout_account_disabled_reason}
+                    />
                   </TableCell>
                   <TableCell>{date(o.created_at)}</TableCell>
                 </TableRow>
@@ -1519,6 +1574,17 @@ export function AdminOrganizationClient({ id }: { id: string }) {
                   <Kv label={v.registration}>
                     {o.registration_number ?? C.none}
                   </Kv>
+                  <Kv label={LIVE.payoutAccount.title}>
+                    <PayoutAccountTag
+                      status={o.payout_account_status}
+                      reason={o.payout_account_disabled_reason}
+                    />
+                  </Kv>
+                  {o.stripe_account_id ? (
+                    <Kv label="Stripe">
+                      <span className="font-mono">{o.stripe_account_id}</span>
+                    </Kv>
+                  ) : null}
                   <Kv label={C.created}>{date(o.created_at)}</Kv>
                 </KvLines>
               </CardBlock>
@@ -1984,5 +2050,34 @@ export function AdminApplicationClient({ id }: { id: string }) {
         }}
       </QueryState>
     </>
+  )
+}
+
+/** An organization's payout account (week 3 part 4, section 26) */
+function PayoutAccountTag({
+  status,
+  reason,
+}: {
+  status?: string
+  reason?: string | null
+}) {
+  if (!status) return <span className="am-dash">{C.none}</span>
+  const tone =
+    status === "ready"
+      ? "success"
+      : status === "restricted" || status === "disconnected"
+        ? "warning"
+        : status === "onboarding"
+          ? "info"
+          : "ghost"
+  return (
+    <span className="grid justify-items-start gap-0.5">
+      <StatusPill tone={tone}>
+        {LIVE.payoutAccount.statusLabel[status] ?? status}
+      </StatusPill>
+      {reason ? (
+        <small className="font-mono text-fs-12 text-fg-3">{reason}</small>
+      ) : null}
+    </span>
   )
 }

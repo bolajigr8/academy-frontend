@@ -488,6 +488,177 @@ export const LIVE = {
       `Congratulations! We are pleased to offer ${player} a place in ${program}, starting ${start}. We will be in touch soon with the next steps.`,
     empty: "Write a message to the family.",
   },
+  /** Week 3 part 3, sections 19-20: the money, line by line */
+  money: {
+    views: {
+      payments: "Payments received",
+      enrollments: "Enrollments",
+    } as Record<string, string>,
+    paidGross: "Paid by families",
+    commission: "Golafly commission",
+    academyNet: "Your payout",
+    academyNetAdmin: "Academy payout",
+    paidOut: "Paid out",
+    payoutPending: "Waiting to be sent",
+    outstanding: "Still to be paid",
+    paidCount: (n: number) => (n === 1 ? "1 payment" : `${n} payments`),
+    totalsFor: (currency: string) => `Totals in ${currency}`,
+    noTotals: "No payments yet.",
+    filters: {
+      status: "Payment",
+      listing: "Program",
+      academy: "Academy",
+      payout: "Payout",
+    },
+    allStatuses: "All (not cancelled)",
+    allListings: "All programs",
+    allAcademies: "All academies",
+    allPayouts: "All payouts",
+    line: "Line",
+    player: "Player",
+    amount: "Amount",
+    payout: "Payout",
+    date: "Date",
+    paidOn: (d: string) => `Paid ${d}`,
+    dueOn: (d: string) => `Due ${d}`,
+    /** the academy's wording (week 3 part 4, section 23) */
+    payoutStatus: {
+      pending: "Waiting for your Stripe account",
+      held: "Golafly is reviewing this payout",
+      processing: "Being sent",
+      paid_out: "Sent",
+      failed: "Sending failed; Golafly will try again",
+      cancelled: "Golafly decided not to send this payout",
+      reversed: "This payout was taken back by Golafly",
+    } as Record<string, string>,
+    /** pending once the account is ready */
+    pendingReady: "Will be sent soon",
+    /** Golafly's own, shorter wording for the same statuses */
+    payoutStatusAdmin: {
+      pending: "Waiting to be sent",
+      held: "Held",
+      processing: "Being sent",
+      paid_out: "Sent",
+      failed: "Failed",
+      cancelled: "Cancelled",
+      reversed: "Reversed",
+    } as Record<string, string>,
+    sentOn: (d: string) => `Sent ${d}`,
+    enrollmentCancelled: "Enrollment cancelled",
+    none: "No payment lines here.",
+    howPayout:
+      "Families pay Golafly by card. Golafly keeps its commission and sends the rest, your payout, to your academy.",
+    family: "Family",
+    card: "Card payment",
+    // transactions (admin)
+    transactionsTitle: "Card payments",
+    transactionsSub:
+      "Every card payment families started on Stripe. Refund due: paid but not applied, refund it by hand in Stripe.",
+    txViews: {
+      all: "All",
+      refund_due: "Refund due",
+      applied: "Applied",
+      pending: "Not settled",
+    } as Record<string, string>,
+    txSearch: "Payer’s email",
+    txPayment: {
+      pending: "Open",
+      paid: "Paid",
+      failed: "Failed",
+      expired: "Expired",
+    } as Record<string, string>,
+    txFulfilment: {
+      pending: "Not applied yet",
+      applied: "Applied",
+      refund_due: "Refund due",
+    } as Record<string, string>,
+    txNone: "No card payments here.",
+    txSession: "Stripe session",
+    refundsTitle: "Payments to refund",
+    refundsLead:
+      "Paid by card but not applied (the enrollment was cancelled meanwhile). Refund them by hand in Stripe.",
+    reviewRefunds: "Review refunds",
+  },
+  /** Week 3 part 4, section 24: Golafly's decision on a held payout */
+  payoutDecision: {
+    release: "Release",
+    cancel: "Cancel payout",
+    releaseTitle: "Release this payout?",
+    releaseText:
+      "The academy is paid after all: the payout is sent at once if its Stripe account is ready, or as soon as it is. Payouts are in euros only.",
+    cancelTitle: "Cancel this payout?",
+    cancelText:
+      "The academy is never paid this line, for example because the family was refunded by hand. This cannot be undone here.",
+    note: "Why (only Golafly sees it)",
+    noteError: "Write why",
+    transfer: (id: string) => `Transfer ${id}`,
+    attempts: (n: number) => (n === 1 ? "1 attempt" : `${n} attempts`),
+    decidedBy: (name: string) => `Decided by ${name}`,
+    keep: "Keep it held",
+  },
+  /** Week 3 part 4, section 22: the academy's payout account */
+  payoutAccount: {
+    title: "Your payout account",
+    lead: "Golafly sends your share of every payment to your own Stripe account, and Stripe sends it on to your bank. You set it up once, on Stripe’s secure form: your bank details never pass through Golafly.",
+    none: "Connect your bank account to receive your payouts. Until then, they wait safely and are sent as soon as it is connected.",
+    connect: "Connect your bank account",
+    onboarding:
+      "You started Stripe’s form but have not finished it, or Stripe is still checking what you sent.",
+    continue: "Continue on Stripe",
+    checking:
+      "Stripe is checking your details. Your payouts will start by themselves as soon as it is done.",
+    restricted: (n: number) =>
+      n > 0
+        ? `Stripe needs ${n === 1 ? "1 more thing" : `${n} more things`} from you before payouts can be sent.`
+        : "Stripe has paused payouts to this account and needs more information.",
+    finish: "Finish on Stripe",
+    ready:
+      "Payouts are on. Your share of each payment is sent to your Stripe account automatically.",
+    manage: "Change bank details",
+    disconnected:
+      "Golafly’s access to your Stripe account was removed, so payouts cannot be sent. Contact Golafly to reconnect.",
+    contactGolafly:
+      "Contact Golafly: your Stripe account cannot receive these transfers.",
+    country: (country: string) =>
+      `Golafly cannot pay academies in ${country} yet. Contact Golafly about receiving your payouts.`,
+    ownerOnly:
+      "Only your organization’s owner can connect or change the payout account.",
+    returning: "Checking your Stripe account…",
+    refreshing: "Opening a new Stripe link…",
+    lastChecked: (d: string) => `Last checked ${d}`,
+    statusLabel: {
+      none: "Not connected",
+      onboarding: "Setup not finished",
+      restricted: "Needs information",
+      ready: "Payouts on",
+      disconnected: "Disconnected",
+    } as Record<string, string>,
+  },
+  /** Week 3 part 3, section 18: the page Stripe sends the family back to */
+  checkout: {
+    title: "Your payment",
+    confirming: "Confirming your payment…",
+    confirmingLead: "Stripe has sent you back. This takes a few seconds.",
+    stillPending:
+      "Your payment is still being confirmed. You will get a notification and an email as soon as it is done; there is no need to pay again.",
+    paidEnrolled: (player: string) =>
+      `Payment received. ${player} is enrolled.`,
+    paidPart: "Payment received. Thank you!",
+    paidPartLead: (amount: string) =>
+      `Still to pay later: ${amount}. You will be reminded a week before each date.`,
+    paidCancelled:
+      "Payment received, but this enrollment has since been cancelled. Golafly will contact you about it.",
+    refundDue:
+      "We received your payment but could not complete it, because the enrollment was cancelled meanwhile. Golafly will contact you and refund you.",
+    expired: "This payment page closed without a payment. Nothing was paid.",
+    failed: "The card payment did not go through. Nothing was paid.",
+    left: "You left the payment page. Nothing was paid.",
+    notFound: "We could not find this payment.",
+    payAgain: "Pay again",
+    viewApplication: "View application",
+    payments: "Payments",
+    amountPaid: (amount: string) => `Amount: ${amount}`,
+  },
   /** The family dashboard's to-dos (what an academy is waiting for) */
   actionNeeded: {
     info: (n: number) =>
@@ -662,10 +833,8 @@ export const LIVE = {
     pendingFamily: "Pay what is due now to confirm the place.",
     // paying arrives in part 3: the button is there, and says so when pressed
     payNow: "Pay now",
-    payNotYet: (date: string | null) =>
-      date
-        ? `Online payment isn’t available yet. Your place is held until ${date}.`
-        : "Online payment isn’t available yet.",
+    payAmount: (amount: string) => `Pay ${amount} now`,
+    payHint: "You pay by card on Stripe’s secure page, then come back here.",
     goPayments: "Go to Payments",
     viewApplication: "View application",
     cardNext: "Next: move to enrollment",

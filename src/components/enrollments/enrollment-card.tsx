@@ -4,7 +4,6 @@ import { Icon } from "@/components/icons/icon"
 import { CardBlock } from "@/components/shared/card-block"
 import { Kv, KvLines } from "@/components/shared/key-value"
 import { Notice } from "@/components/shared/notice"
-import { notify } from "@/components/shared/notify"
 import { SectionHead } from "@/components/shared/section-head"
 import { StatusPill } from "@/components/shared/status-pill"
 import { Button } from "@/components/ui/button"
@@ -15,11 +14,12 @@ import type {
   ApiEnrollmentCore,
   ApiEnrollmentPayment,
 } from "@/features/enrollments/api"
-import { ENROLLMENT_TONE } from "@/features/enrollments/logic"
+import { ENROLLMENT_TONE, sumByCurrency } from "@/features/enrollments/logic"
 import { formatMoney } from "@/lib/money"
 import { routes } from "@/routes"
 
 import { ScheduleTable } from "./schedule-table"
+import { payable, usePay } from "./use-pay"
 
 const t = LIVE.enrollment
 const day = (iso: string) => DATES.fmt(iso.slice(0, 10))
@@ -41,6 +41,7 @@ export function EnrollmentCard({
   }
   side: "family" | "academy"
 }) {
+  const { pay, busy } = usePay()
   return (
     <CardBlock aria-labelledby="h-enrollment">
       <SectionHead
@@ -69,24 +70,16 @@ export function EnrollmentCard({
       e.status === "pending" &&
       e.payments.some((r) => r.status === "due" || r.status === "overdue") ? (
         <div className="flex flex-wrap gap-2">
-          <Button
-            onClick={() =>
-              notify(
-                t.payNotYet(
-                  e.first_payment_deadline
-                    ? day(e.first_payment_deadline)
-                    : null
-                ),
-                undefined,
-                "info"
-              )
-            }
-          >
-            <Icon name="wallet" size={16} /> {t.payNow}
+          <Button onClick={() => pay(payable(e.payments))} aria-busy={busy}>
+            <Icon name="wallet" size={16} />{" "}
+            {t.payAmount(
+              sumByCurrency(payable(e.payments).map((r) => r.amount))
+            )}
           </Button>
           <ButtonLink href={routes.family.payments} variant="secondary">
             {t.goPayments}
           </ButtonLink>
+          <p className="w-full text-fs-13 text-fg-3">{t.payHint}</p>
         </div>
       ) : null}
       {e.status === "confirmed" && e.confirmed_at ? (

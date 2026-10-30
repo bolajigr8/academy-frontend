@@ -1,6 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
+import { useState } from "react"
 
 import { PageHeading } from "@/components/layout/page-heading"
 import { CardBlock } from "@/components/shared/card-block"
@@ -8,10 +9,8 @@ import { CheckList } from "@/components/shared/check-list"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorState } from "@/components/shared/error-state"
 import { KpiCard, KpiGrid } from "@/components/shared/kpi-card"
-import { notify } from "@/components/shared/notify"
 import { SectionHead } from "@/components/shared/section-head"
 import { ButtonLink } from "@/components/ui/button-link"
-import { DATES } from "@/data/catalog"
 import { EMPTY } from "@/data/copy"
 import { FAMILY } from "@/data/family-copy"
 import { LIVE } from "@/data/live-copy"
@@ -26,6 +25,7 @@ import { useSession } from "@/features/auth/session"
 import { routes } from "@/routes"
 
 import { ScheduleTable } from "./schedule-table"
+import { usePay } from "./use-pay"
 
 const t = LIVE.enrollment
 
@@ -51,6 +51,8 @@ export function LiveFamilyPayments() {
     enabled,
   })
   const f = FAMILY.payments
+  const { pay, busy } = usePay()
+  const [paying, setPaying] = useState<number | null>(null)
   const rows = payments.data ?? []
   const of = (...s: string[]) =>
     rows.filter((r) => s.includes(r.status)).map((r) => r.amount)
@@ -121,10 +123,16 @@ export function LiveFamilyPayments() {
               />
               <ScheduleTable
                 rows={rows}
-                // paying arrives in part 3: the button explains that, with the line's date
-                onPay={(r) =>
-                  notify(t.payNotYet(DATES.fmt(r.due_date)), undefined, "info")
-                }
+                // one card payment for every due line of that enrollment (section 18)
+                onPay={(group) => {
+                  setPaying(
+                    "enrollment_id" in group[0]
+                      ? (group[0] as { enrollment_id: number }).enrollment_id
+                      : 0
+                  )
+                  void pay(group)
+                }}
+                payingKey={busy ? paying : null}
                 appHref={(r) => {
                   // the line names its enrollment; its application page shows the whole schedule
                   const e = enrollments.data?.find(
