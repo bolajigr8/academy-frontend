@@ -11,6 +11,7 @@ import { StatusPill } from "@/components/shared/status-pill"
 import { Button } from "@/components/ui/button"
 import { DATES } from "@/data/catalog"
 import { LIVE } from "@/data/live-copy"
+import { useCountries } from "@/features/auth/hooks"
 import { useSession } from "@/features/auth/session"
 import { getOrganization } from "@/features/club/api"
 import { clubKeys } from "@/features/club/query-keys"
@@ -83,6 +84,12 @@ export function PayoutAccountCard({
       void queryClient.invalidateQueries({ queryKey: paymentKeys.all })
   }, [status, queryClient])
 
+  // the country's name, not its code ("the Bahamas", not "BS")
+  const countries = useCountries()
+  const countryName =
+    countries?.find((c) => c.code === org.data?.country_code)?.name ??
+    org.data?.country_code ??
+    ""
   const isOwner = Boolean(
     user && org.data && org.data.owner_user_id === user.id
   )
@@ -117,7 +124,8 @@ export function PayoutAccountCard({
   let action: { label: string } | null = null
   if (a) {
     if (a.disabled_reason === "recipient_agreement") text = t.contactGolafly
-    else if (a.status === "none") text = supported ? t.none : t.country(country)
+    else if (a.status === "none")
+      text = supported ? t.none : t.country(countryName)
     else if (a.status === "onboarding")
       text = polling || back === "return" ? t.checking : t.onboarding
     else if (a.status === "restricted") text = t.restricted(a.requirements_due)
@@ -153,7 +161,6 @@ export function PayoutAccountCard({
           ) : undefined
         }
       />
-      <p className="text-fs-14 leading-lh-relaxed text-fg-3">{t.lead}</p>
       {!a ? (
         <p className="text-fs-14 text-fg-3" aria-busy="true">
           {back === "refresh"

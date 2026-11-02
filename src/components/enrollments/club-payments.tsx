@@ -37,7 +37,7 @@ export function ClubPayments() {
   })
   return (
     <>
-      <PageHeading title={LIVE.enrollment.listTitle} subtitle={M.howPayout} />
+      <PageHeading title={LIVE.enrollment.listTitle} subtitle={M.academySub} />
       <PayoutAccountCard back={back} />
       <div
         role="tablist"

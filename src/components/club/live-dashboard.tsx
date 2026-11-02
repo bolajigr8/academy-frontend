@@ -90,6 +90,7 @@ export function LiveDashboardClient() {
   })
   const d = dash.data
   const p = d?.period
+  const eurRevenue = p?.revenue.find((r) => r.currency === "EUR")
   const academy = academies.data?.[0]
   const capacity = (listings.data ?? [])
     .filter((l) => l.status === "published")
@@ -216,17 +217,14 @@ export function LiveDashboardClient() {
           <KpiCard
             label={t.kpi.revenue[0]}
             value={
+              // euros only on the academy's dashboard
               p
-                ? p.revenue.length
-                  ? p.revenue
-                      .map((r) => money(r.net_minor, r.currency))
-                      .join(" + ")
+                ? eurRevenue
+                  ? money(eurRevenue.net_minor, "EUR")
                   : L.revenueNone
                 : "…"
             }
-            sub={
-              p ? (p.revenue.length ? L.revenueSub : L.revenueSoon) : undefined
-            }
+            sub={p ? (eurRevenue ? L.revenueSub : L.revenueSoon) : undefined}
             icon="euro"
           />
         </KpiGrid>

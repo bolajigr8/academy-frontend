@@ -67,7 +67,7 @@ export function EnrollmentCard({
         </Notice>
       ) : null}
       {side === "family" &&
-      e.status === "pending" &&
+      e.status !== "cancelled" &&
       e.payments.some((r) => r.status === "due" || r.status === "overdue") ? (
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => pay(payable(e.payments))} aria-busy={busy}>

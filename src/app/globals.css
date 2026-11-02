@@ -173,8 +173,12 @@
   --text-fs-12: var(--fs-12);
   --text-fs-13: var(--fs-13);
   --text-fs-14: var(--fs-14);
+  /* in-between sizes used by the live screens (were undefined, so ignored) */
+  --text-fs-15: 15px;
   --text-fs-16: var(--fs-16);
+  --text-fs-17: 17px;
   --text-fs-18: var(--fs-18);
+  --text-fs-19: 19px;
   --text-fs-20: var(--fs-20);
   --text-fs-24: var(--fs-24);
   --text-fs-32: var(--fs-32);
@@ -219,10 +223,9 @@
    ============================================================ */
 :root {
   /* Brand — Neon */
-  /* oklch(0.918 0.238 127.5) */
   --gf-neon:            #B7FF00;
   --gf-neon-bright:     #C8FF33;
-  --gf-neon-deep:       #6DBE45;
+  --gf-neon-deep:       #67A000;
   --gf-neon-shadow:     rgba(183, 255, 0, 0.35);
   --gf-neon-glow:       rgba(183, 255, 0, 0.55);
 
@@ -336,8 +339,8 @@
   --grid-line-strong:   rgba(183, 255, 0, 0.08);
 
   /* Gradients */
-  --grad-neon:          linear-gradient(135deg, #B7FF00 0%, #6DBE45 100%);
-  --grad-neon-soft:     linear-gradient(135deg, rgba(183,255,0,0.20) 0%, rgba(109,190,69,0.05) 100%);
+  --grad-neon:          linear-gradient(135deg, #B7FF00 0%, #67A000 100%);
+  --grad-neon-soft:     linear-gradient(135deg, rgba(183,255,0,0.20) 0%, rgba(103,160,0,0.05) 100%);
   --grad-ink:           linear-gradient(180deg, #0B0D0C 0%, #000000 100%);
   --grad-ink-reverse:   linear-gradient(180deg, #000000 0%, #0B0D0C 100%);
   --grad-radial-neon:   radial-gradient(circle at 50% 50%, rgba(183,255,0,0.35) 0%, rgba(183,255,0,0) 70%);
@@ -394,7 +397,9 @@
   --fg-3:               #3B4239;   /* Was #3B4239 - muted text (unchanged) */
   --fg-4:               #6C7668;   /* Was #6C7668 - subtle text (unchanged) */
   --fg-muted:           var(--gf-mist);
-  --fg-accent:          var(--gf-neon-deep);
+  /* matchday Golafly (oklch 0.54 0.15 129): lime as TYPE on light, 4.4:1;
+     the old lime was 2.1:1 and unreadable */
+  --fg-accent:          #537E00;
   --fg-on-accent:       var(--gf-black);
   --text-on-neon:       #000000;
 
@@ -411,7 +416,7 @@
   --border-1:           rgba(11, 13, 12, 0.08);
   --border-2:           rgba(11, 13, 12, 0.16);
   --border-3:           rgba(11, 13, 12, 0.24);
-  --border-accent:      rgba(109, 190, 69, 0.55);
+  --border-accent:      rgba(103, 160, 0, 0.55);
 
   /* Semantic colors — darkened for AA contrast on light backgrounds */
   --gf-success:         #3A8C28;
@@ -426,22 +431,22 @@
   --overlay-deep:       rgba(11, 13, 12, 0.85);
 
   /* Subtle neon tints — more visible on light to add depth */
-  --tint-neon-1:        rgba(109, 190, 69, 0.10);
-  --tint-neon-2:        rgba(109, 190, 69, 0.18);
-  --tint-neon-3:        rgba(109, 190, 69, 0.26);
-  --tint-neon-4:        rgba(109, 190, 69, 0.38);
+  --tint-neon-1:        rgba(103, 160, 0, 0.08);
+  --tint-neon-2:        rgba(103, 160, 0, 0.14);
+  --tint-neon-3:        rgba(103, 160, 0, 0.22);
+  --tint-neon-4:        rgba(103, 160, 0, 0.32);
 
   /* Grid lines — more visible on light bg */
   --grid-line:          rgba(11, 13, 12, 0.06);
   --grid-line-strong:   rgba(11, 13, 12, 0.12);
 
   /* Gradients — more pronounced transitions for depth */
-  --grad-neon:          linear-gradient(135deg, #B7FF00 0%, #6DBE45 100%);
-  --grad-neon-soft:     linear-gradient(135deg, rgba(183,255,0,0.30) 0%, rgba(109,190,69,0.12) 100%);
+  --grad-neon:          linear-gradient(135deg, #B7FF00 0%, #67A000 100%);
+  --grad-neon-soft:     linear-gradient(135deg, rgba(183,255,0,0.30) 0%, rgba(103,160,0,0.12) 100%);
   --grad-ink:           linear-gradient(180deg, #FFFFFF 0%, var(--gf-mist-light) 100%);
   --grad-ink-reverse:   linear-gradient(180deg, var(--gf-mist-light) 0%, #FFFFFF 100%);
-  --grad-radial-neon:   radial-gradient(circle at 50% 50%, rgba(109,190,69,0.40) 0%, rgba(109,190,69,0) 70%);
-  --grad-radial-soft:   radial-gradient(ellipse at 50% 50%, rgba(109,190,69,0.18) 0%, rgba(109,190,69,0) 65%);
+  --grad-radial-neon:   radial-gradient(circle at 50% 50%, rgba(103,160,0,0.40) 0%, rgba(103,160,0,0) 70%);
+  --grad-radial-soft:   radial-gradient(ellipse at 50% 50%, rgba(103,160,0,0.18) 0%, rgba(103,160,0,0) 65%);
   --grad-stadium:       linear-gradient(180deg, rgba(11,13,12,0) 0%, rgba(11,13,12,0.65) 100%);
   --grad-stadium-soft:  linear-gradient(180deg, rgba(11,13,12,0) 30%, rgba(11,13,12,0.55) 100%);
   --grad-section:       linear-gradient(180deg, var(--gf-mist-light) 0%, var(--gf-chalk-deep) 100%);
@@ -453,7 +458,7 @@
   --glass-bg-nav:       rgba(255, 255, 255, 0.70);
   --glass-bg-nav-scrolled: rgba(255, 255, 255, 0.92);
   --glass-border:       rgba(11, 13, 12, 0.08);
-  --glass-border-neon:  rgba(109, 190, 69, 0.30);
+  --glass-border-neon:  rgba(103, 160, 0, 0.30);
   --glass-blur:         blur(18px) saturate(160%);
 
   /* Drop shadows — more depth on light backgrounds */
@@ -462,17 +467,18 @@
   --shadow-md:          0 12px 32px rgba(11,13,12,0.14);
   --shadow-lg:          0 24px 64px rgba(11,13,12,0.18);
   --shadow-xl:          0 48px 100px rgba(11,13,12,0.22);
-  --shadow-nav:         0 12px 48px rgba(11,13,12,0.14), 0 0 0 1px rgba(109,190,69,0.25);
+  --shadow-nav:         0 12px 48px rgba(11,13,12,0.14), 0 0 0 1px rgba(103,160,0,0.25);
 
   /* Neon glows — more prominent on light for visibility */
-  --glow-neon-sm:       0 0 0 1px rgba(109,190,69,0.50), 0 0 16px rgba(109,190,69,0.30);
-  --glow-neon-md:       0 0 0 1px rgba(109,190,69,0.60), 0 0 24px rgba(109,190,69,0.40), 0 0 50px rgba(109,190,69,0.15);
-  --glow-neon-lg:       0 0 0 1px rgba(109,190,69,0.70), 0 0 36px rgba(109,190,69,0.45), 0 0 90px rgba(109,190,69,0.20);
-  --glow-neon-text:     0 0 16px rgba(109,190,69,0.40), 0 0 32px rgba(109,190,69,0.18);
+  /* matchday: a lime fill on a light page needs a 1px edge (#67A000) to keep its shape */
+  --glow-neon-sm:       0 0 0 1px #67A000, 0 0 12px rgba(183,255,0,0.35);
+  --glow-neon-md:       0 0 0 1px #67A000, 0 0 20px rgba(183,255,0,0.45);
+  --glow-neon-lg:       0 0 0 1px rgba(103,160,0,0.70), 0 0 36px rgba(103,160,0,0.45), 0 0 90px rgba(103,160,0,0.20);
+  --glow-neon-text:     0 0 16px rgba(103,160,0,0.40), 0 0 32px rgba(103,160,0,0.18);
 
   /* Inset */
   --inner-stroke:       inset 0 0 0 1px rgba(11,13,12,0.06);
-  --inner-neon:         inset 0 0 0 1px rgba(109,190,69,0.30), inset 0 0 24px rgba(109,190,69,0.06);
+  --inner-neon:         inset 0 0 0 1px rgba(103,160,0,0.30), inset 0 0 24px rgba(103,160,0,0.06);
 
   /* Image filters — light mode keeps images natural */
   --filter-media:       contrast(1.02) saturate(1.05);

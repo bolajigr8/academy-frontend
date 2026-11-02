@@ -34,6 +34,12 @@ export type CardView = {
   alt: string
   verification: Verification | "rejected"
   crest: CrestData
+  /** the academy's own logo (backend), shown beside its name */
+  logoUrl?: string | null
+  /** for the initials fallback */
+  academyId?: string
+  /** to look the logo up from the academy's public profile when the card has none */
+  academySlug?: string
   city: string
   country: string
   academyName: string
@@ -120,6 +126,8 @@ export function cardFromApi(
     alt: "",
     verification: s === "club_academy" ? "club" : s,
     crest: crestFor({ id: String(l.academy.id), name: l.academy.name }),
+    logoUrl: l.academy.logo_url ?? null,
+    academyId: String(l.academy.id),
     city: l.academy.city,
     country: l.academy.country_name,
     academyName: l.academy.name,
@@ -173,6 +181,9 @@ export function cardFromSearch(c: ApiSearchCard): CardView {
           ? s
           : "verified",
     crest: crestFor({ id: c.academy.slug, name: c.academy.name }),
+    logoUrl: c.academy.logo_url ?? null,
+    academyId: c.academy.slug,
+    academySlug: c.academy.slug,
     city: c.academy.city,
     country: c.academy.country_name,
     academyName: c.academy.name,

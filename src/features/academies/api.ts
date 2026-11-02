@@ -116,6 +116,8 @@ export type ApiSearchCard = {
     country_name: string
     country_code: string
     verification_status: string
+    /** not sent on search cards yet (asked of the backend); used when it is */
+    logo_url?: string | null
   }
   primary_image_url: string | null
   age_min: number | null

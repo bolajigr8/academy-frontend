@@ -133,6 +133,19 @@ export function PaymentsLedger({
   })
   const rows = withLabels(q.data?.data ?? [])
   const totals = Object.entries(q.data?.meta?.totals ?? {})
+  const zero = { amount_minor: 0, amount: "0.00", currency: "EUR" }
+  // euros only on the academy's dashboard (other currencies come with the listing currency doc)
+  const eur = q.data
+    ? (q.data.meta?.totals?.EUR ?? {
+        paid_gross: zero,
+        commission: zero,
+        academy_net: zero,
+        paid_count: 0,
+        outstanding_gross: zero,
+        paid_out: zero,
+        payout_pending: zero,
+      })
+    : null
   const last = q.data?.meta?.last_page ?? 1
   const reset = (f: () => void) => {
     f()
@@ -221,7 +234,31 @@ export function PaymentsLedger({
 
   return (
     <div className="grid min-w-0 gap-4">
-      {totals.length === 0 && q.data ? null : (
+      {side === "academy" ? (
+        // the academy: three numbers, in euros (dashboards are in euros)
+        eur ? (
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-3">
+            <KpiCard
+              label={M.paidGross}
+              value={formatMoney(eur.paid_gross)}
+              sub={M.paidCount(eur.paid_count)}
+            />
+            <KpiCard
+              label={M.academyNet}
+              value={formatMoney(eur.academy_net)}
+              sub={M.payoutSplit(
+                formatMoney(eur.paid_out),
+                formatMoney(eur.payout_pending)
+              )}
+              tone="ink"
+            />
+            <KpiCard
+              label={M.outstanding}
+              value={formatMoney(eur.outstanding_gross)}
+            />
+          </div>
+        ) : null
+      ) : totals.length === 0 && q.data ? null : (
         <div className="grid gap-3">
           {totals.map(([currency, t]) => (
             <section
@@ -340,7 +377,11 @@ export function PaymentsLedger({
           className="h-48 animate-pulse rounded-lg bg-bg-2"
         />
       ) : rows.length === 0 ? (
-        <EmptyState icon="wallet" title={M.none} text={M.howPayout} />
+        <EmptyState
+          icon="wallet"
+          title={M.none}
+          text={side === "admin" ? M.howPayout : M.academyEmpty}
+        />
       ) : (
         <>
           {/* phones: one card per line */}

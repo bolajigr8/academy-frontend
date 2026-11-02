@@ -94,8 +94,12 @@ export function SearchBar({
         onSubmit(value)
       }}
       className={cn(
-        "grid grid-cols-[1.5fr_1fr_1.25fr_1.1fr_1fr_auto] items-stretch rounded-md border border-glass-border bg-glass-bg-strong am-glass [transition:box-shadow_var(--dur-base)_var(--ease-out),border-color_var(--dur-base)_var(--ease-out)] focus-within:border-border-accent focus-within:shadow-[var(--shadow-md),var(--glow-neon-sm)] le-1180:grid-cols-[repeat(3,minmax(0,1fr))] le-720:grid-cols-[1fr_1fr]",
-        compact ? "shadow-(--shadow-sm)" : "shadow-(--shadow-md)"
+        // made obvious: a solid surface (not glass), a lime border at all
+        // times, a stronger lift, and a lime glow while typing
+        "grid grid-cols-[1.5fr_1fr_1.25fr_1.1fr_1fr_auto] items-stretch rounded-md border-2 border-border-accent bg-surface-elevated [transition:box-shadow_var(--dur-base)_var(--ease-out),border-color_var(--dur-base)_var(--ease-out)] focus-within:border-gf-neon focus-within:shadow-[var(--shadow-lg),var(--glow-neon-md)] le-1180:grid-cols-[repeat(3,minmax(0,1fr))] le-720:grid-cols-[1fr_1fr]",
+        compact
+          ? "shadow-(--shadow-md)"
+          : "shadow-[var(--shadow-lg),var(--glow-neon-sm)]"
       )}
     >
       {seg(
@@ -188,7 +192,7 @@ export function SearchBar({
       <Button
         type="submit"
         className={cn(
-          "text-fs-16 le-720:col-[1/-1]",
+          "text-fs-16 font-bold le-720:col-[1/-1]",
           compact
             ? "m-1.5 min-h-11 min-w-[104px]"
             : "m-2 min-h-[52px] min-w-[128px] le-1180:col-start-3 le-720:m-[10px]"

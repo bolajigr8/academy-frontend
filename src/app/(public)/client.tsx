@@ -10,7 +10,6 @@ import {
 import { FeaturedPrograms } from "@/components/home/featured-programs"
 import { HomeHero } from "@/components/home/home-hero"
 import { TypeTiles } from "@/components/home/type-tiles"
-import { UpcomingIntakes } from "@/components/home/upcoming-intakes"
 
 /* Home (index.html): one job, "Find your football academy". */
 export function HomeClient() {
@@ -19,7 +18,6 @@ export function HomeClient() {
       <HomeHero />
       <TypeTiles />
       <FeaturedPrograms />
-      <UpcomingIntakes />
       <HowItWorks />
       <VerifyBand />
       <HostBand />

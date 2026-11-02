@@ -20,6 +20,9 @@ function withQuery(path: string, query?: Query): string {
 export type AuthRole = "family" | "academy"
 
 export const routes = {
+  /** the academy blog (Sanity) */
+  blog: "/blog",
+  blogPost: (slug: string) => `/blog/${enc(slug)}`,
   home: "/",
   /** In-page anchors on the home page (#how-it-works, #verification, #for-academies) */
   homeSection: (id: string) => `/#${enc(id)}`,

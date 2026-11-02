@@ -30,6 +30,7 @@ export const NAV = {
       href: routes.homeSection("for-academies"),
       label: "For academies",
     },
+    { href: routes.blog, label: "Blog" },
   ],
   listCta: "List your academy",
 }
@@ -203,6 +204,7 @@ export const FOOTER = {
       title: "Families",
       links: [
         { label: "Find academies", href: routes.academies() },
+        { label: "Blog", href: routes.blog },
         {
           label: "Residential academies",
           href: routes.academies({ type: "residential" }),
@@ -308,3 +310,24 @@ export const INFRA = {
   },
   loading: "Loading",
 } as const
+
+/** The academy blog (Golafly's Sanity blog, "Academy" section) */
+export const BLOG = {
+  nav: "Blog",
+  title: "The Golafly Academy blog",
+  lead: "Guides for families and players: choosing an academy, trials, applications, travel and life away from home.",
+  metaTitle: "Football academy guides and advice | Golafly Academy blog",
+  metaDescription:
+    "Advice for football families: choosing an academy, trials and applications, costs, travel and life at a residential academy.",
+  all: "All",
+  featured: "Featured",
+  read: "Read the article",
+  empty: "No articles yet. New guides are on their way.",
+  emptyCategory: "No articles in this category yet.",
+  back: "All articles",
+  more: "Keep reading",
+  tags: "Topics",
+  watch: "Watch the video",
+  ctaFallback: "Find your academy",
+  notFoundTitle: "Article not found",
+}

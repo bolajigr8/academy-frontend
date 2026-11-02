@@ -21,7 +21,8 @@ type Props = {
 
 /* AmKpi + .amk-kpi*: js/amk-shell.jsx, css/amk-app.css:113-120 and 387 (480px padding) */
 const toneText: Record<Tone | "default", string> = {
-  default: "text-fg-3",
+  // labels one step brighter than before, so they read clearly (matchday)
+  default: "text-fg-2",
   neon: "text-text-on-neon",
   ink: "text-bg-0",
 }
@@ -57,8 +58,10 @@ export function KpiCard({
       </div>
       <b
         className={cn(
-          "font-display text-[clamp(30px,3vw,40px)] leading-none font-bold tracking-[-0.03em] tabular-nums",
-          compact && "text-[clamp(22px,2.2vw,30px)]"
+          // matchday's stat numerals: the body font, semibold, tabular, and
+          // never wider than the card (a long amount wraps instead of spilling)
+          "min-w-0 text-[clamp(24px,2.4vw,32px)] leading-tight font-semibold tracking-[-0.03em] [overflow-wrap:anywhere] tabular-nums",
+          compact && "text-[clamp(20px,2vw,26px)]"
         )}
       >
         {value}

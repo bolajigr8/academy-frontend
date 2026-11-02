@@ -1,16 +1,21 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import type { ElementType } from "react"
 
 import { Icon } from "@/components/icons/icon"
+import { getAcademyProfile } from "@/features/academies/api"
 import { cardFromListing, type CardView } from "@/features/academies/card-view"
+import { discoveryKeys } from "@/features/academies/query-keys"
 import type { EnrichedListing } from "@/features/academies/types"
 import { DATES } from "@/data/catalog"
+import { isLive } from "@/lib/data-source"
 import { easeOut, inView, pressIcon } from "@/lib/motion"
 import { cn } from "@/lib/utils"
 
+import { AcademyLogo } from "./academy-logo"
 import { ClubCrest } from "./club-crest"
 import { SafeImage } from "./safe-image"
 import { Tag } from "./tag"
@@ -180,12 +185,8 @@ export function ListingCard({
           ) : null}
           {c.verification === "pending" ? <Tag mono>New academy</Tag> : null}
         </div>
-        <div className="absolute bottom-3 left-3 flex items-center gap-2 text-fs-13 font-bold text-gf-white [text-shadow:0_1px_8px_var(--overlay-strong)]">
-          <ClubCrest
-            crest={c.crest}
-            size={30}
-            club={c.verification === "club"}
-          />
+        <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-fs-13 font-bold text-gf-white [text-shadow:0_1px_8px_var(--overlay-strong)]">
+          <Icon name="pin" size={14} />
           <span>
             {c.city}, {c.country}
           </span>
@@ -200,8 +201,13 @@ export function ListingCard({
         />
       ) : null}
       <div className={cn("grid gap-1.5", wide ? "pt-0" : "pt-3")}>
-        <div className="flex items-start justify-between gap-[10px]">
-          <p className="text-fs-14 font-semibold text-fg-2">{c.academyName}</p>
+        {/* wraps, so a long name and the rating never push past the card */}
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-[10px] gap-y-1">
+          {/* the academy's own logo beside its name (initials only without one) */}
+          <p className="flex max-w-full min-w-0 items-center gap-2 text-fs-14 font-semibold text-fg-2">
+            <CardLogo c={c} />
+            <span className="truncate">{c.academyName}</span>
+          </p>
           <ReviewStars summary={c.reviews} />
         </div>
         <Heading className="font-display text-fs-18 leading-lh-snug font-bold tracking-[-0.01em] text-fg-1">
@@ -247,5 +253,34 @@ export function ListingCard({
         ) : null}
       </div>
     </motion.article>
+  )
+}
+
+/*
+ * The academy's logo beside its name. Search cards don't carry logo_url yet,
+ * so the card looks it up from the academy's public profile (GET
+ * /academy/profiles/{slug}: one request per academy, cached for the
+ * session); when the backend adds logo_url to the card, no request is made.
+ * The initials badge shows while loading, without a logo, or on any error.
+ */
+function CardLogo({ c }: { c: CardView }) {
+  const lookup = !c.logoUrl && Boolean(c.academySlug) && isLive("discovery")
+  const profile = useQuery({
+    queryKey: discoveryKeys.profile(c.academySlug ?? ""),
+    queryFn: () => getAcademyProfile(c.academySlug ?? ""),
+    enabled: lookup,
+    staleTime: Infinity,
+    retry: false,
+  })
+  const logo = c.logoUrl ?? (lookup ? profile.data?.logo_url : null) ?? null
+  return logo ? (
+    <AcademyLogo
+      id={c.academyId ?? c.academyName}
+      name={c.academyName}
+      logoUrl={logo}
+      size={26}
+    />
+  ) : (
+    <ClubCrest crest={c.crest} size={26} club={c.verification === "club"} />
   )
 }

@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from "react"
 import { Icon } from "@/components/icons/icon"
 import { PageHeading } from "@/components/layout/page-heading"
 import { CardBlock } from "@/components/shared/card-block"
-import { Notice } from "@/components/shared/notice"
 import { Button } from "@/components/ui/button"
 import { ButtonLink } from "@/components/ui/button-link"
 import { LIVE } from "@/data/live-copy"
@@ -18,9 +17,14 @@ import {
 import { sumByCurrency } from "@/features/enrollments/logic"
 import { familyKeys } from "@/features/family/query-keys"
 import { notificationKeys } from "@/features/notifications/api"
-import { getCheckout, paymentKeys } from "@/features/payments/api"
+import {
+  getCheckout,
+  paymentKeys,
+  type ApiCheckout,
+} from "@/features/payments/api"
 import { getApiStatus } from "@/lib/api/errors"
 import { formatMoney } from "@/lib/money"
+import { cn } from "@/lib/utils"
 import { routes } from "@/routes"
 
 import { ScheduleTable } from "./schedule-table"
@@ -97,121 +101,180 @@ export function CheckoutReturn({
     </div>
   )
 
-  let body: React.ReactNode
-  if (left) body = <Retry e={e} text={t.left} links={links} />
+  // one centred result: an icon, a headline, the amount, a sentence, actions
+  let view: ResultProps
+  if (left)
+    view = {
+      tone: "neutral",
+      icon: "info",
+      head: t.head.left,
+      text: t.left,
+      retry: true,
+    }
   else if (!validSession || getApiStatus(checkout.error) === 404)
-    body = (
-      <>
-        <Notice tone="warning" icon="alert">
-          {t.notFound}
-        </Notice>
-        {links}
-      </>
-    )
+    view = {
+      tone: "warning",
+      icon: "alert",
+      head: t.head.notFound,
+      text: t.notFound,
+    }
   else if (!checkout.data || status === "pending")
-    body = timedOut ? (
-      <>
-        <Notice tone="neutral" icon="clock">
-          {t.stillPending}
-        </Notice>
-        {links}
-      </>
-    ) : (
-      <div className="grid justify-items-start gap-2" aria-live="polite">
-        <span className="flex items-center gap-2 text-fs-18 font-semibold">
-          <Icon name="spinner" size={20} className="animate-spin" />
-          {t.confirming}
-        </span>
-        <p className="text-fs-14 text-fg-3">{t.confirmingLead}</p>
-      </div>
-    )
+    view = timedOut
+      ? {
+          tone: "neutral",
+          icon: "clock",
+          head: t.head.pending,
+          text: t.stillPending,
+        }
+      : {
+          tone: "neutral",
+          icon: "spinner",
+          spin: true,
+          head: t.head.confirming,
+          text: t.confirmingLead,
+          live: true,
+          noLinks: true,
+        }
   else if (status === "paid") {
     const c = checkout.data
     const enrollmentStatus = e?.status ?? c.enrollment.status
-    body = (
-      <>
-        <Notice
-          tone={enrollmentStatus === "cancelled" ? "neutral" : "success"}
-          icon="checkcircle"
-        >
-          {enrollmentStatus === "confirmed"
-            ? t.paidEnrolled(
-                e ? `${e.player.first_name} ${e.player.last_name}` : ""
-              )
-            : enrollmentStatus === "cancelled"
-              ? t.paidCancelled
-              : t.paidPart}
-          <br />
-          {t.amountPaid(formatMoney(c.amount))}
-          {enrollmentStatus === "pending" &&
-          e &&
-          e.outstanding.amount_minor > 0 ? (
-            <>
-              <br />
-              {t.paidPartLead(formatMoney(e.outstanding))}
-            </>
-          ) : null}
-        </Notice>
-        <ScheduleTable rows={c.payments} />
-        {links}
-      </>
-    )
+    view = {
+      tone: enrollmentStatus === "cancelled" ? "neutral" : "success",
+      icon: "checkcircle",
+      head:
+        enrollmentStatus === "confirmed"
+          ? t.head.enrolled
+          : enrollmentStatus === "cancelled"
+            ? t.head.cancelled
+            : t.head.paid,
+      text:
+        enrollmentStatus === "confirmed"
+          ? t.paidEnrolled(
+              e ? `${e.player.first_name} ${e.player.last_name}` : ""
+            )
+          : enrollmentStatus === "cancelled"
+            ? t.paidCancelled
+            : e && e.outstanding.amount_minor > 0
+              ? t.paidPartLead(formatMoney(e.outstanding))
+              : t.paidPart,
+      amount: formatMoney(c.amount),
+      lines: c.payments,
+    }
   } else if (status === "refund_due")
-    body = (
-      <>
-        <Notice tone="warning" icon="info">
-          {t.refundDue}
-          <br />
-          {t.amountPaid(formatMoney(checkout.data.amount))}
-        </Notice>
-        {links}
-      </>
-    )
+    view = {
+      tone: "warning",
+      icon: "info",
+      head: t.head.refund,
+      text: t.refundDue,
+      amount: formatMoney(checkout.data.amount),
+    }
   else
-    body = (
-      <Retry
-        e={e}
-        text={status === "failed" ? t.failed : t.expired}
-        links={links}
-      />
-    )
+    view = {
+      tone: "neutral",
+      icon: "info",
+      head: status === "failed" ? t.head.failed : t.head.expired,
+      text: status === "failed" ? t.failed : t.expired,
+      retry: true,
+    }
 
   return (
     <>
       <PageHeading title={t.title} />
-      <CardBlock className="grid gap-4">{body}</CardBlock>
+      <Result {...view} e={e} links={links} />
     </>
   )
 }
 
-/** Nothing was paid: offer to pay what is still due, in one go */
-function Retry({
-  e,
-  text,
-  links,
-}: {
-  e: ApiEnrollment | undefined
+type ResultProps = {
+  tone: "success" | "warning" | "neutral"
+  icon: "checkcircle" | "info" | "alert" | "clock" | "spinner"
+  spin?: boolean
+  head: string
   text: string
-  links: React.ReactNode
-}) {
-  const { pay, busy } = usePay()
-  const due = e && e.status === "pending" ? payable(e.payments) : []
+  amount?: string
+  lines?: ApiCheckout["payments"]
+  retry?: boolean
+  live?: boolean
+  noLinks?: boolean
+}
+
+const RING: Record<ResultProps["tone"], string> = {
+  success: "bg-gf-neon text-text-on-neon shadow-(--glow-neon-md)",
+  warning:
+    "bg-[color-mix(in_srgb,var(--gf-warning)_18%,transparent)] text-gf-warning",
+  neutral: "bg-bg-3 text-fg-1",
+}
+
+/** The page's one result card */
+function Result({
+  tone,
+  icon,
+  spin,
+  head,
+  text,
+  amount,
+  lines,
+  retry,
+  live,
+  noLinks,
+  e,
+  links,
+}: ResultProps & { e: ApiEnrollment | undefined; links: React.ReactNode }) {
   return (
-    <>
-      <Notice tone="neutral" icon="info">
-        {text}
-      </Notice>
-      {due.length ? (
-        <Button
-          className="justify-self-start"
-          onClick={() => pay(due)}
-          aria-busy={busy}
-        >
-          <Icon name="wallet" size={16} /> {t.payAgain} ·{" "}
-          {sumByCurrency(due.map((r) => r.amount))}
-        </Button>
+    <CardBlock className="mx-auto grid w-full max-w-[640px] justify-items-center gap-4 p-[clamp(20px,4vw,40px)] text-center">
+      <span
+        aria-hidden="true"
+        className={cn(
+          "grid size-20 place-items-center rounded-full",
+          RING[tone]
+        )}
+      >
+        <Icon
+          name={icon}
+          size={38}
+          className={spin ? "animate-spin" : undefined}
+        />
+      </span>
+      <h2 className="font-display text-[clamp(24px,3vw,32px)] leading-tight font-bold">
+        {head}
+      </h2>
+      {amount ? (
+        <p className="grid gap-0.5">
+          <small className="text-fs-13 text-fg-3">{t.paidLabel}</small>
+          <b className="text-[clamp(28px,4vw,40px)] leading-none font-semibold tabular-nums">
+            {amount}
+          </b>
+        </p>
       ) : null}
-      {links}
-    </>
+      <p
+        aria-live={live ? "polite" : undefined}
+        className="max-w-[48ch] text-fs-16 leading-lh-relaxed text-fg-2"
+      >
+        {text}
+      </p>
+      {retry ? <Retry e={e} /> : null}
+      {lines && lines.length ? (
+        <div className="grid w-full gap-2 text-left">
+          <h3 className="text-fs-14 font-semibold text-fg-2">{t.linesTitle}</h3>
+          <ScheduleTable rows={lines} />
+        </div>
+      ) : null}
+      {noLinks ? null : links}
+    </CardBlock>
+  )
+}
+
+/** Nothing was paid: offer to pay what is still due, in one go */
+function Retry({ e }: { e: ApiEnrollment | undefined }) {
+  const { pay, busy } = usePay()
+  const due =
+    // any enrollment not cancelled: a confirmed one still owes its later lines
+    e && e.status !== "cancelled" ? payable(e.payments) : []
+  if (!due.length) return null
+  return (
+    <Button onClick={() => pay(due)} aria-busy={busy}>
+      <Icon name="wallet" size={16} /> {t.payAgain} ·{" "}
+      {sumByCurrency(due.map((r) => r.amount))}
+    </Button>
   )
 }

@@ -501,6 +501,11 @@ export const LIVE = {
     paidOut: "Paid out",
     payoutPending: "Waiting to be sent",
     outstanding: "Still to be paid",
+    /** the academy's Payments page: what it is, not how the money moves */
+    academySub: "Payments from families and your payouts",
+    academyEmpty: "Payments appear here as families pay.",
+    payoutSplit: (sent: string, coming: string) =>
+      `${sent} sent · ${coming} on the way`,
     paidCount: (n: number) => (n === 1 ? "1 payment" : `${n} payments`),
     totalsFor: (currency: string) => `Totals in ${currency}`,
     noTotals: "No payments yet.",
@@ -599,8 +604,7 @@ export const LIVE = {
   /** Week 3 part 4, section 22: the academy's payout account */
   payoutAccount: {
     title: "Your payout account",
-    lead: "Golafly sends your share of every payment to your own Stripe account, and Stripe sends it on to your bank. You set it up once, on Stripe’s secure form: your bank details never pass through Golafly.",
-    none: "Connect your bank account to receive your payouts. Until then, they wait safely and are sent as soon as it is connected.",
+    none: "Connect your bank account to receive your payouts.",
     connect: "Connect your bank account",
     onboarding:
       "You started Stripe’s form but have not finished it, or Stripe is still checking what you sent.",
@@ -620,7 +624,7 @@ export const LIVE = {
     contactGolafly:
       "Contact Golafly: your Stripe account cannot receive these transfers.",
     country: (country: string) =>
-      `Golafly cannot pay academies in ${country} yet. Contact Golafly about receiving your payouts.`,
+      `Payouts aren’t available in ${country} yet. Please contact Golafly.`,
     ownerOnly:
       "Only your organization’s owner can connect or change the payout account.",
     returning: "Checking your Stripe account…",
@@ -637,6 +641,21 @@ export const LIVE = {
   /** Week 3 part 3, section 18: the page Stripe sends the family back to */
   checkout: {
     title: "Your payment",
+    // the headline of each outcome (the sentences below stay as the detail)
+    head: {
+      confirming: "Confirming your payment",
+      enrolled: "You’re in!",
+      paid: "Payment received",
+      cancelled: "Payment received",
+      refund: "We’ll refund you",
+      expired: "Nothing was paid",
+      failed: "Payment didn’t go through",
+      left: "Nothing was paid",
+      pending: "Still confirming",
+      notFound: "Payment not found",
+    } as Record<string, string>,
+    paidLabel: "Amount paid",
+    linesTitle: "What you paid for",
     confirming: "Confirming your payment…",
     confirmingLead: "Stripe has sent you back. This takes a few seconds.",
     stillPending:
