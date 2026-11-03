@@ -3,7 +3,7 @@
 import { useState } from "react"
 
 import type { ApiEnrollmentPayment } from "@/features/enrollments/api"
-import { startCheckout } from "@/features/payments/api"
+import { serviceFee, startCheckout } from "@/features/payments/api"
 
 /** Leaving for Stripe (a seam the tests can stand in for) */
 export const browser = { go: (url: string) => window.location.assign(url) }
@@ -33,4 +33,26 @@ export function usePay() {
     }
   }
   return { pay, busy }
+}
+
+/**
+ * What the family will be charged for these lines (week 3 part 5, section
+ * 29): the lines, the service fee once on their sum, and the total. The
+ * figure equals what Stripe charges.
+ */
+export function payTotals(rows: ApiEnrollmentPayment[], feeRate: number) {
+  const currency = rows[0]?.amount.currency ?? "EUR"
+  const linesMinor = rows.reduce((s, r) => s + r.amount.amount_minor, 0)
+  const feeMinor = serviceFee(linesMinor, feeRate)
+  const money = (minor: number) => ({
+    amount_minor: minor,
+    amount: (minor / 100).toFixed(2),
+    currency,
+  })
+  return {
+    lines: money(linesMinor),
+    fee: feeMinor > 0 ? money(feeMinor) : null,
+    total: money(linesMinor + feeMinor),
+    feeRate,
+  }
 }

@@ -281,9 +281,9 @@ export const ADMIN = {
       "Golafly’s share and the academy’s are filled when a line is paid (paying arrives with the next update).",
   },
   commission: {
-    title: "Commission",
+    title: "Commission and fees",
     subtitle:
-      "Golafly’s share of each payment, taken from the academy’s payout, never added to the family’s price.",
+      "Golafly’s commission (from the academy’s share) and the service fee families pay on top.",
     defaultRate: "Default rate",
     defaultRateSub: "for every organization without its own rate",
     overrides: "Organization rates",
@@ -292,8 +292,23 @@ export const ADMIN = {
     none: "No organization has its own rate.",
     organization: "Organization",
     rate: "Rate (%)",
-    rateHint: "0 to 100, up to two decimals. 0 means no commission.",
-    rateError: "Enter a rate from 0 to 100, with up to two decimals",
+    rateHint: "0 to 30, up to two decimals. 0 means no commission.",
+    rateError: "Enter a rate from 0 to 30, with up to two decimals",
+    // week 3 part 5: the platform rates
+    platformTitle: "Platform rates",
+    platformSub:
+      "For the whole platform. The commission applies to new enrollments; the service fee to new payments (a payment already open keeps its fee).",
+    platformCommission: "Golafly commission (%)",
+    platformCommissionHint:
+      "0 to 30. Taken from the academy’s share of each payment.",
+    serviceFee: "Family service fee (%)",
+    serviceFeeHint:
+      "0 to 10. Added on top of what the family pays; 0 means no fee.",
+    feeError: "Enter a rate from 0 to 10, with up to two decimals",
+    saveRates: "Save rates",
+    noChange: "Nothing changed.",
+    setBy: (who: string, at: string) => `Set by ${who} on ${at}`,
+    byDefault: "Default (never changed)",
     chooseOrg: "Choose an organization",
     save: "Save rate",
     clear: "Use the default",

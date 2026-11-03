@@ -19,12 +19,10 @@ import type {
   ApiEnrollmentPayment,
   ApiFamilyPayment,
 } from "@/features/enrollments/api"
-import {
-  PAYMENT_TONE,
-  sumByCurrency,
-  withLabels,
-} from "@/features/enrollments/logic"
+import { PAYMENT_TONE, withLabels } from "@/features/enrollments/logic"
 import { formatMoney } from "@/lib/money"
+
+import { payTotals } from "./use-pay"
 
 const t = LIVE.enrollment
 
@@ -40,6 +38,7 @@ export function ScheduleTable({
   appHref,
   onPay,
   payingKey = null,
+  feeRate = 0,
 }: {
   rows: (ApiEnrollmentPayment | ApiFamilyPayment)[]
   /** the family's payments page: a column naming the program and the player */
@@ -52,6 +51,8 @@ export function ScheduleTable({
   onPay?: (rows: ApiEnrollmentPayment[]) => void
   /** the enrollment being paid (the button shows it is busy) */
   payingKey?: number | null
+  /** part 5: the service fee rate, so the Pay button shows the full total */
+  feeRate?: number
 }) {
   const actions = Boolean(onPay || appHref)
   // due lines grouped by enrollment; the button sits on each group's first line
@@ -72,7 +73,8 @@ export function ScheduleTable({
         aria-busy={payingKey === k || undefined}
         onClick={() => onPay(group)}
       >
-        {t.payAmount(sumByCurrency(group.map((x) => x.amount)))}
+        {/* the total charged: the lines plus the service fee (part 5) */}
+        {t.payAmount(formatMoney(payTotals(group, feeRate).total))}
       </Button>
     )
   }

@@ -47,7 +47,7 @@ export function LiveFilterPanel({
   const cities = filters.cities.filter(
     (c) => !state.country || c.country_code === state.country
   )
-  const currency = state.currency || filters.default_currency
+  const currency = "EUR"
   const bounds = filters.prices.find((p) => p.currency === currency)
 
   const tri = (v: string) => (v === "true" || v === "false" ? v : "")
@@ -97,27 +97,10 @@ export function LiveFilterPanel({
         badge={state.priceMin || state.priceMax ? 1 : 0}
       >
         <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
-          <label className="col-span-full grid gap-1 text-fs-12 font-semibold text-fg-3">
-            {L.currency}
-            <NativeSelect
-              size="sm"
-              value={currency}
-              onChange={(e) =>
-                set({
-                  currency: e.target.value,
-                  // the bounds belong to one currency: changing it clears them
-                  priceMin: "",
-                  priceMax: "",
-                })
-              }
-            >
-              {filters.currencies.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </NativeSelect>
-          </label>
+          {/* euros only (week 3 part 5): no currency choice */}
+          <p className="col-span-full text-fs-12 font-semibold text-fg-3">
+            {L.priceInEur}
+          </p>
           <PriceFields
             key={`${state.priceMin}|${state.priceMax}|${currency}`}
             min={state.priceMin}

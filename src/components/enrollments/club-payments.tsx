@@ -8,7 +8,12 @@ import { PageHeading } from "@/components/layout/page-heading"
 import { LIVE } from "@/data/live-copy"
 import { listAllListings } from "@/features/club/api"
 import { clubKeys } from "@/features/club/query-keys"
-import { getPayoutAccount, payoutKeys } from "@/features/payments/api"
+import {
+  getPayoutAccount,
+  listPortalPayments,
+  paymentKeys,
+  payoutKeys,
+} from "@/features/payments/api"
 import { cn } from "@/lib/utils"
 
 import { LivePortalEnrollments } from "./live-portal-enrollments"
@@ -27,6 +32,12 @@ export function ClubPayments() {
   // set when Stripe sent the owner back from its form (/host/payouts)
   const p = useSearchParams().get("payout")
   const back = p === "return" || p === "refresh" ? p : null
+  // the same first page the list below loads (shared cache): what is waiting
+  const firstPage = useQuery({
+    queryKey: paymentKeys.portal({ page: 1 }),
+    queryFn: () => listPortalPayments({ page: 1 }),
+  })
+  const waiting = firstPage.data?.meta?.totals?.EUR?.payout_pending ?? null
   const account = useQuery({
     queryKey: payoutKeys.account(),
     queryFn: getPayoutAccount,
@@ -38,7 +49,7 @@ export function ClubPayments() {
   return (
     <>
       <PageHeading title={LIVE.enrollment.listTitle} subtitle={M.academySub} />
-      <PayoutAccountCard back={back} />
+      <PayoutAccountCard back={back} waiting={waiting} />
       <div
         role="tablist"
         aria-label={LIVE.enrollment.listTitle}

@@ -46,6 +46,8 @@ export const LIVE = {
   },
   /** Listing editor controls for backend fields the prototype has no control for */
   editorUi: {
+    repriceEur: (was: string) =>
+      `This listing was priced in ${was}. Prices on Golafly are now in euros only: check the amounts below are right in euros before saving.`,
     academy: "Academy",
     trainingFrequency: "Training frequency",
     trainingFrequencyHint: "For example “10 sessions per week”",
@@ -205,6 +207,9 @@ export const LIVE = {
       "Add a profile for yourself or for each child you apply for. You fill it in once and reuse it for every application.",
     neededLead: "Needed before applying:",
     readyNote: "Complete: ready to use in applications.",
+    /** the meter: the profile fields an application needs (not the documents) */
+    profileFields: "Profile details",
+    docsCount: (n: number, of: number) => `Documents: ${n} of ${of} uploaded`,
     /** is_complete counts only options.required_fields (contract part 1, §2-3): documents are per application */
     /** reuse a profile file as an application document (same paper, two names) */
     fromProfile: (first: string) =>
@@ -405,6 +410,7 @@ export const LIVE = {
     min: "Min",
     max: "Max",
     priceRange: (lo: string, hi: string) => `Price ${lo} to ${hi}`,
+    priceInEur: "Prices in euros (€)",
     priceHint: (currency: string) =>
       `Program fee in ${currency}. Programs priced in other currencies are not compared.`,
     page: (n: number, of: number) => `Page ${n} of ${of}`,
@@ -579,6 +585,7 @@ export const LIVE = {
     } as Record<string, string>,
     txNone: "No card payments here.",
     txSession: "Stripe session",
+    txFee: (fee: string, rate: number) => `incl. ${fee} service fee (${rate}%)`,
     refundsTitle: "Payments to refund",
     refundsLead:
       "Paid by card but not applied (the enrollment was cancelled meanwhile). Refund them by hand in Stripe.",
@@ -606,6 +613,14 @@ export const LIVE = {
     title: "Your payout account",
     none: "Connect your bank account to receive your payouts.",
     connect: "Connect your bank account",
+    waiting: (amount: string) => `${amount} is waiting to be sent to you.`,
+    connectShort: "Connect your bank",
+    getPaidTitle: "Get paid",
+    getPaidLead:
+      "Connect your bank account once, and your share of every payment is sent to you automatically.",
+    getPaidWaiting: (amount: string) =>
+      `${amount} is waiting for you. Connect your bank account to receive it.`,
+    getPaidCta: "Set up payouts",
     onboarding:
       "You started Stripe’s form but have not finished it, or Stripe is still checking what you sent.",
     continue: "Continue on Stripe",
@@ -618,7 +633,7 @@ export const LIVE = {
     finish: "Finish on Stripe",
     ready:
       "Payouts are on. Your share of each payment is sent to your Stripe account automatically.",
-    manage: "Change bank details",
+    manage: "Open your Stripe dashboard",
     disconnected:
       "Golafly’s access to your Stripe account was removed, so payouts cannot be sent. Contact Golafly to reconnect.",
     contactGolafly:
@@ -655,6 +670,7 @@ export const LIVE = {
       notFound: "Payment not found",
     } as Record<string, string>,
     paidLabel: "Amount paid",
+    feeIncluded: (fee: string) => `Includes a ${fee} service fee`,
     linesTitle: "What you paid for",
     confirming: "Confirming your payment…",
     confirmingLead: "Stripe has sent you back. This takes a few seconds.",
@@ -853,6 +869,10 @@ export const LIVE = {
     // paying arrives in part 3: the button is there, and says so when pressed
     payNow: "Pay now",
     payAmount: (amount: string) => `Pay ${amount} now`,
+    /** part 5: the fee shown before paying */
+    feeBreakdown: (lines: string, rate: number, fee: string) =>
+      `${lines} due + ${rate}% service fee ${fee}`,
+    feeNote: (rate: number) => `A ${rate}% service fee is added when you pay.`,
     payHint: "You pay by card on Stripe’s secure page, then come back here.",
     goPayments: "Go to Payments",
     viewApplication: "View application",
@@ -1034,6 +1054,8 @@ export const LIVE = {
     done: "Draft deleted.",
   },
   /** 429 (week 2 part 1, section 1: ask the user to wait a minute) */
+  uploadTooLarge:
+    "This file is too large to upload. Try a smaller file (images up to 600 KB).",
   tooManyAttempts: "Too many attempts. Please wait a minute and try again.",
   /** Fallback when a request fails without a message from the server */
   requestFailed: "Something went wrong. Please try again.",

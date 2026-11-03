@@ -97,9 +97,15 @@ export function HomeHero() {
             id="amk-hero-title"
             className="mb-5 font-display text-[clamp(40px,5.6vw,72px)] leading-[0.98] font-bold tracking-[-0.03em] text-fg-1 uppercase"
           >
-            {HERO.titleA}{" "}
-            <span className="text-amk-accent-ink [text-shadow:var(--glow-neon-text)]">
-              {HERO.titleB}
+            {/* matchday's headline: three lines, the key word on a lime band
+                (black on #B7FF00 in both themes) instead of coloured text */}
+            {/* real spaces between the lines: screen readers read whole words */}
+            <span className="block">{HERO.titleA}</span>{" "}
+            <span className="block">
+              <span className="hl-neon">{HERO.titleB.split(" ")[0]}</span>
+            </span>{" "}
+            <span className="block">
+              {HERO.titleB.split(" ").slice(1).join(" ")}
             </span>
           </motion.h1>
           <motion.p

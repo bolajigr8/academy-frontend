@@ -16,7 +16,7 @@ import { Modal } from "@/components/shared/modal"
 import { NativeSelect } from "@/components/shared/native-select"
 import { notify } from "@/components/shared/notify"
 import { StatusPill } from "@/components/shared/status-pill"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Table,
@@ -42,6 +42,7 @@ import {
 } from "@/features/payments/api"
 import { getApiFieldErrors, getCurrentStatus } from "@/lib/api/errors"
 import { formatMoney } from "@/lib/money"
+import { cn } from "@/lib/utils"
 
 const M = LIVE.money
 const D = LIVE.payoutDecision
@@ -166,6 +167,18 @@ export function PaymentsLedger({
       ) : null}
       {r.payout?.paid_at ? (
         <small>{M.sentOn(day(r.payout.paid_at))}</small>
+      ) : null}
+      {/* waiting because the academy has no ready account: the next step, here */}
+      {side === "academy" && !accountReady && r.payout?.status === "pending" ? (
+        <a
+          href="#payout-account"
+          className={cn(
+            buttonVariants({ variant: "secondary", size: "sm" }),
+            "mt-1"
+          )}
+        >
+          {LIVE.payoutAccount.connectShort}
+        </a>
       ) : null}
       {r.enrollment.status === "cancelled" ? (
         <small className="font-semibold text-gf-warning">

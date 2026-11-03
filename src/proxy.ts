@@ -39,6 +39,21 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get(TOKEN_COOKIE)?.value
   const role = request.cookies.get(ROLE_COOKIE)?.value
 
+  // applying needs a family account: signed out -> sign in as a family and
+  // come back to this same apply link (start date kept); an academy account
+  // sees the page's explanation; an admin goes to the admin area
+  if (/^\/academies\/[^/]+\/apply\/?$/.test(pathname)) {
+    if (!token) {
+      const url = new URL("/login", request.url)
+      url.searchParams.set("next", pathname + search)
+      url.searchParams.set("role", "family")
+      return NextResponse.redirect(url)
+    }
+    if (role === "admin")
+      return NextResponse.redirect(new URL("/admin", request.url))
+    return NextResponse.next()
+  }
+
   if (!token) {
     const url = new URL("/login", request.url)
     url.searchParams.set("next", pathname + search)
@@ -58,5 +73,11 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/club/:path*", "/family/:path*", "/admin/:path*", "/admin"],
+  matcher: [
+    "/club/:path*",
+    "/family/:path*",
+    "/admin/:path*",
+    "/admin",
+    "/academies/:slug/apply",
+  ],
 }

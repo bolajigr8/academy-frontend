@@ -42,7 +42,17 @@ export function LiveFamilyPayments() {
   const enabled = user?.role === "applicant"
   const payments = useQuery({
     queryKey: enrollmentKeys.myPayments(),
-    queryFn: () => allPages((page) => listMyPayments({ page })),
+    // every page of lines, and the current service fee rate from the first (part 5)
+    queryFn: async () => {
+      const first = await listMyPayments({ page: 1 })
+      const rest =
+        (first.meta?.last_page ?? 1) > 1
+          ? await allPages((page) =>
+              page === 1 ? Promise.resolve(first) : listMyPayments({ page })
+            )
+          : first.data
+      return { rows: rest, feeRate: first.meta?.service_fee_rate ?? 0 }
+    },
     enabled,
   })
   const enrollments = useQuery({
@@ -53,7 +63,8 @@ export function LiveFamilyPayments() {
   const f = FAMILY.payments
   const { pay, busy } = usePay()
   const [paying, setPaying] = useState<number | null>(null)
-  const rows = payments.data ?? []
+  const rows = payments.data?.rows ?? []
+  const feeRate = payments.data?.feeRate ?? 0
   const of = (...s: string[]) =>
     rows.filter((r) => s.includes(r.status)).map((r) => r.amount)
   const activeEnrollments = (enrollments.data ?? []).filter(
@@ -133,6 +144,7 @@ export function LiveFamilyPayments() {
                   void pay(group)
                 }}
                 payingKey={busy ? paying : null}
+                feeRate={feeRate}
                 appHref={(r) => {
                   // the line names its enrollment; its application page shows the whole schedule
                   const e = enrollments.data?.find(

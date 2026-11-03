@@ -455,8 +455,24 @@ export async function cancelAdminEnrollment(
 
 /* ---------------- week 3 part 2: commission (section 15) ---------------- */
 
+/** One platform-wide rate (week 3 part 5, section 28) */
+export type PlatformRate = {
+  /** a percent, at most two decimals */
+  value: number
+  /** config = never set by an admin (commission 5, fee 0) */
+  source: "config" | "admin"
+  updated_at: string | null
+  updated_by: string | null
+}
+
 export type AdminSettings = {
+  /** the effective platform commission (the admin's, else the configured 5) */
   default_rate: number
+  /** part 5: the platform commission (0-30) and the family's service fee (0-10) */
+  platform?: {
+    commission_rate: PlatformRate
+    service_fee_rate: PlatformRate
+  }
   overrides: {
     organization_id: number
     organization_name: string
@@ -481,6 +497,22 @@ export async function saveCommission(
   const res = await apiClient.post<ApiResponse<AdminSettings>>(
     "/academy/admin/settings",
     { organization_id: organizationId, commission_rate: rate }
+  )
+  return { settings: res.data.data, message: res.data.message }
+}
+
+/**
+ * POST /academy/admin/settings/platform (part 5, section 28): one or both
+ * rates; both saved or neither. The commission applies to new enrollments,
+ * the fee to new checkouts. A rate cannot be cleared: 0 stops it.
+ */
+export async function savePlatformRates(rates: {
+  commission_rate?: number
+  service_fee_rate?: number
+}): Promise<{ settings: AdminSettings; message: string }> {
+  const res = await apiClient.post<ApiResponse<AdminSettings>>(
+    "/academy/admin/settings/platform",
+    rates
   )
   return { settings: res.data.data, message: res.data.message }
 }

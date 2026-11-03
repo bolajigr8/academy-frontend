@@ -15,6 +15,8 @@ import { useCountries } from "@/features/auth/hooks"
 import { useSession } from "@/features/auth/session"
 import { getOrganization } from "@/features/club/api"
 import { clubKeys } from "@/features/club/query-keys"
+import type { ApiMoney } from "@/lib/api/types"
+import { formatMoney } from "@/lib/money"
 import {
   createPayoutLink,
   getPayoutAccount,
@@ -51,7 +53,10 @@ const TONE: Record<
  */
 export function PayoutAccountCard({
   back,
+  waiting,
 }: {
+  /** the academy's payouts not sent yet (meta.totals.EUR.payout_pending) */
+  waiting?: ApiMoney | null
   /** set when Stripe sent the owner back: "return" or "refresh" */
   back?: "return" | "refresh" | null
 }) {
@@ -149,7 +154,11 @@ export function PayoutAccountCard({
   }
 
   return (
-    <CardBlock aria-labelledby="h-payout-account" className="grid gap-3">
+    <CardBlock
+      id="payout-account"
+      aria-labelledby="h-payout-account"
+      className="grid scroll-mt-24 gap-3"
+    >
       <SectionHead
         id="h-payout-account"
         title={t.title}
@@ -171,6 +180,11 @@ export function PayoutAccountCard({
         </p>
       ) : (
         <>
+          {a.status !== "ready" && waiting && waiting.amount_minor > 0 ? (
+            <p className="text-fs-18 font-semibold text-fg-1">
+              {t.waiting(formatMoney(waiting))}
+            </p>
+          ) : null}
           <Notice
             tone={
               a.status === "ready"

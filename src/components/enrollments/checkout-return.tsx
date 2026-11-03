@@ -14,7 +14,6 @@ import {
   getMyEnrollment,
   type ApiEnrollment,
 } from "@/features/enrollments/api"
-import { sumByCurrency } from "@/features/enrollments/logic"
 import { familyKeys } from "@/features/family/query-keys"
 import { notificationKeys } from "@/features/notifications/api"
 import {
@@ -28,7 +27,7 @@ import { cn } from "@/lib/utils"
 import { routes } from "@/routes"
 
 import { ScheduleTable } from "./schedule-table"
-import { payable, usePay } from "./use-pay"
+import { payable, payTotals, usePay } from "./use-pay"
 
 const t = LIVE.checkout
 /** "Ask every 2 seconds for about 30 seconds" (section 18) */
@@ -158,6 +157,10 @@ export function CheckoutReturn({
               ? t.paidPartLead(formatMoney(e.outstanding))
               : t.paidPart,
       amount: formatMoney(c.amount),
+      // part 5: amount includes the service fee; say how much of it was the fee
+      feeNote: c.service_fee
+        ? t.feeIncluded(formatMoney(c.service_fee))
+        : undefined,
       lines: c.payments,
     }
   } else if (status === "refund_due")
@@ -192,6 +195,7 @@ type ResultProps = {
   head: string
   text: string
   amount?: string
+  feeNote?: string
   lines?: ApiCheckout["payments"]
   retry?: boolean
   live?: boolean
@@ -213,6 +217,7 @@ function Result({
   head,
   text,
   amount,
+  feeNote,
   lines,
   retry,
   live,
@@ -244,6 +249,9 @@ function Result({
           <b className="text-[clamp(28px,4vw,40px)] leading-none font-semibold tabular-nums">
             {amount}
           </b>
+          {feeNote ? (
+            <small className="text-fs-13 text-fg-3">{feeNote}</small>
+          ) : null}
         </p>
       ) : null}
       <p
@@ -265,7 +273,11 @@ function Result({
 }
 
 /** Nothing was paid: offer to pay what is still due, in one go */
-function Retry({ e }: { e: ApiEnrollment | undefined }) {
+function Retry({
+  e,
+}: {
+  e: (ApiEnrollment & { feeRate?: number }) | undefined
+}) {
   const { pay, busy } = usePay()
   const due =
     // any enrollment not cancelled: a confirmed one still owes its later lines
@@ -274,7 +286,7 @@ function Retry({ e }: { e: ApiEnrollment | undefined }) {
   return (
     <Button onClick={() => pay(due)} aria-busy={busy}>
       <Icon name="wallet" size={16} /> {t.payAgain} ·{" "}
-      {sumByCurrency(due.map((r) => r.amount))}
+      {formatMoney(payTotals(due, e?.feeRate ?? 0).total)}
     </Button>
   )
 }

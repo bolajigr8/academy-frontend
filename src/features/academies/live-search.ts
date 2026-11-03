@@ -103,9 +103,8 @@ export function parseLive(query: string): LiveSearch {
     level: get("playing_level"),
     priceMin: money(get("price_min")),
     priceMax: money(get("price_max")),
-    currency: /^[A-Za-z]{3}$/.test(get("currency"))
-      ? get("currency").toUpperCase()
-      : "",
+    // euros only (week 3 part 5): an old link's ?currency=GBP is ignored
+    currency: "",
     dur: LIVE_DURATIONS.some((d) => d.id === get("duration"))
       ? get("duration")
       : "",
@@ -135,7 +134,7 @@ export function toLiveQuery(s: LiveSearch): string {
   put("playing_level", s.level)
   put("price_min", s.priceMin)
   put("price_max", s.priceMax)
-  if (s.priceMin || s.priceMax) put("currency", s.currency)
+  if (s.priceMin || s.priceMax) put("currency", "EUR")
   put("duration", s.dur)
   put("start", s.start)
   put("has_places", s.places)
@@ -156,11 +155,7 @@ const lastDay = (ym: string) => {
 }
 
 /** state -> GET /academy/search parameters (contract names, units and rules) */
-export function toSearchParams(
-  s: LiveSearch,
-  today: string,
-  defaultCurrency = "EUR"
-): SearchParams {
+export function toSearchParams(s: LiveSearch, today: string): SearchParams {
   const p: SearchParams = { sort: s.sort, per_page: PER_PAGE, page: s.page }
   // q: 2 to 100 characters, else not sent
   const q = s.q.trim()
@@ -177,7 +172,8 @@ export function toSearchParams(
   if (lo !== null && hi !== null && hi < lo) [lo, hi] = [hi, lo]
   if (lo !== null) p.price_min = lo
   if (hi !== null) p.price_max = hi
-  if (lo !== null || hi !== null) p.currency = s.currency || defaultCurrency
+  // euros only: the API refuses any other currency (week 3 part 5)
+  if (lo !== null || hi !== null) p.currency = "EUR"
   const dur = LIVE_DURATIONS.find((d) => d.id === s.dur)
   if (dur) {
     p.duration_min = dur.min

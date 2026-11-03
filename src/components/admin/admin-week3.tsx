@@ -41,6 +41,9 @@ import {
   publishReview,
   rejectReview,
   saveCommission,
+  savePlatformRates,
+  type AdminSettings,
+  type PlatformRate,
   type AdminMoneyish,
 } from "@/features/admin/api"
 import { adminKeys } from "@/features/admin/query-keys"
@@ -625,7 +628,8 @@ export function AdminCommissionClient() {
   const [rate, setRate] = useState("")
   const [error, setError] = useState("")
   const validRate = (v: string) =>
-    /^\d{1,3}(\.\d{1,2})?$/.test(v.trim()) && Number(v) <= 100
+    // part 5: an organization's commission is 0 to 30
+    /^\d{1,2}(\.\d{1,2})?$/.test(v.trim()) && Number(v) <= 30
 
   const save = async (organizationId: number, value: number | null) => {
     try {
@@ -656,16 +660,7 @@ export function AdminCommissionClient() {
   return (
     <>
       <AdminHeader title={t.title} subtitle={t.subtitle} />
-      <CardBlock aria-labelledby="h-default">
-        <SectionHead
-          id="h-default"
-          title={t.defaultRate}
-          sub={t.defaultRateSub}
-        />
-        <b className="font-display text-[40px] leading-none">
-          {s ? `${s.default_rate}%` : "…"}
-        </b>
-      </CardBlock>
+      {s ? <PlatformRates settings={s} /> : null}
       <CardBlock aria-labelledby="h-over">
         <SectionHead id="h-over" title={t.overrides} sub={t.overridesSub} />
         {s && s.overrides.length === 0 ? (
@@ -746,5 +741,117 @@ export function AdminCommissionClient() {
         </div>
       </CardBlock>
     </>
+  )
+}
+
+/*
+ * The platform rates (week 3 part 5, section 28): Golafly's commission (0-30)
+ * and the family's service fee (0-10), each with who set it and when. Only
+ * what changed is sent; both are saved together or not at all.
+ */
+function PlatformRates({ settings }: { settings: AdminSettings }) {
+  const t = ADMIN.commission
+  const queryClient = useQueryClient()
+  const p = settings.platform
+  const commissionNow = p?.commission_rate.value ?? settings.default_rate
+  const feeNow = p?.service_fee_rate.value ?? 0
+  const [commission, setCommission] = useState(String(commissionNow))
+  const [fee, setFee] = useState(String(feeNow))
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [busy, setBusy] = useState(false)
+  const twoDecimals = (v: string, max: number) =>
+    /^\d{1,2}(\.\d{1,2})?$/.test(v.trim()) && Number(v) <= max
+  const who = (r: PlatformRate | undefined) =>
+    r && r.source === "admin" && r.updated_at
+      ? t.setBy(r.updated_by ?? "an admin", date(r.updated_at))
+      : t.byDefault
+
+  const save = async () => {
+    const e: Record<string, string> = {}
+    if (!twoDecimals(commission, 30)) e["rate-commission"] = t.rateError
+    if (!twoDecimals(fee, 10)) e["rate-fee"] = t.feeError
+    setErrors(e)
+    if (Object.keys(e).length) return
+    const body: { commission_rate?: number; service_fee_rate?: number } = {}
+    if (Number(commission) !== commissionNow)
+      body.commission_rate = Number(commission)
+    if (Number(fee) !== feeNow) body.service_fee_rate = Number(fee)
+    if (!Object.keys(body).length) return notify(t.noChange)
+    setBusy(true)
+    try {
+      const { message } = await savePlatformRates(body)
+      notify(message)
+      await queryClient.invalidateQueries({ queryKey: adminKeys.settings() })
+    } catch (err) {
+      setErrors(
+        getApiFieldErrors(err, {
+          commission_rate: "rate-commission",
+          service_fee_rate: "rate-fee",
+        }).byControl
+      )
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <CardBlock aria-labelledby="h-platform" className="grid gap-4">
+      <SectionHead
+        id="h-platform"
+        title={t.platformTitle}
+        sub={t.platformSub}
+      />
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(260px,100%),1fr))] items-start gap-4">
+        <div className="grid gap-1">
+          <FormField
+            id="rate-commission"
+            label={t.platformCommission}
+            hint={t.platformCommissionHint}
+            required
+            error={errors["rate-commission"]}
+          >
+            {(f) => (
+              <Input
+                {...f}
+                inputMode="decimal"
+                value={commission}
+                onChange={(e) => setCommission(e.target.value)}
+              />
+            )}
+          </FormField>
+          <small className="text-fs-12 text-fg-3">
+            {who(p?.commission_rate)}
+          </small>
+        </div>
+        <div className="grid gap-1">
+          <FormField
+            id="rate-fee"
+            label={t.serviceFee}
+            hint={t.serviceFeeHint}
+            required
+            error={errors["rate-fee"]}
+          >
+            {(f) => (
+              <Input
+                {...f}
+                inputMode="decimal"
+                value={fee}
+                onChange={(e) => setFee(e.target.value)}
+              />
+            )}
+          </FormField>
+          <small className="text-fs-12 text-fg-3">
+            {who(p?.service_fee_rate)}
+          </small>
+        </div>
+      </div>
+      <Button
+        className="justify-self-start"
+        onClick={() => save()}
+        aria-busy={busy}
+      >
+        {t.saveRates}
+      </Button>
+    </CardBlock>
   )
 }

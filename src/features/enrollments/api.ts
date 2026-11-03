@@ -122,19 +122,30 @@ export async function listMyEnrollments(
   return res.data
 }
 
-/** GET /academy/me/enrollments/{id}: with the schedule (someone else's: 404) */
-export async function getMyEnrollment(id: number): Promise<ApiEnrollment> {
-  const res = await apiClient.get<ApiResponse<ApiEnrollment>>(
-    `/academy/me/enrollments/${id}`
-  )
-  return res.data.data
+/**
+ * GET /academy/me/enrollments/{id}: with the schedule (someone else's: 404).
+ * Part 5: meta.service_fee_rate (the current fee, a percent; 0 = none) is
+ * carried on the result as feeRate, so the screen can show the fee first.
+ */
+export async function getMyEnrollment(
+  id: number
+): Promise<ApiEnrollment & { feeRate: number }> {
+  const res = await apiClient.get<
+    ApiResponse<ApiEnrollment> & { meta?: { service_fee_rate?: number } }
+  >(`/academy/me/enrollments/${id}`)
+  return { ...res.data.data, feeRate: res.data.meta?.service_fee_rate ?? 0 }
+}
+
+/** Part 5: the current service fee rate next to the paging (0 = none) */
+export type ApiFamilyPaymentsPage = ApiPage<ApiFamilyPayment> & {
+  meta: ApiPage<ApiFamilyPayment>["meta"] & { service_fee_rate?: number }
 }
 
 /** GET /academy/me/payments: every line, the next due first (per_page up to 50) */
 export async function listMyPayments(
   params: { status?: PaymentStatus; page?: number; per_page?: number } = {}
-): Promise<ApiPage<ApiFamilyPayment>> {
-  const res = await apiClient.get<ApiPage<ApiFamilyPayment>>(
+): Promise<ApiFamilyPaymentsPage> {
+  const res = await apiClient.get<ApiFamilyPaymentsPage>(
     "/academy/me/payments",
     { params: { per_page: 50, ...params } }
   )

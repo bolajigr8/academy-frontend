@@ -501,14 +501,22 @@ export function LiveStepPricing({
           values={options.payment_frequencies}
           onChange={(paymentFrequency) => set({ paymentFrequency })}
         />
-        <OptionSelect
-          id="amk-w-currency"
-          label={ui.currency}
-          value={d.currency}
-          values={options.currencies}
-          labels={options.currencies.map((c) => ({ id: c, label: c }))}
-          onChange={(currency) => set({ currency })}
-        />
+        {d.pricedIn ? (
+          <div className="col-span-full">
+            <Notice tone="warning" icon="alert">
+              {LIVE.editorUi.repriceEur(d.pricedIn)}
+            </Notice>
+          </div>
+        ) : null}
+        {/* euros only (week 3 part 5): the currency is fixed text, not a choice */}
+        <div className="grid gap-1.5">
+          <span className="text-fs-14 font-semibold text-fg-1">
+            {ui.currency}
+          </span>
+          <span className="flex min-h-12 items-center rounded-md border border-border-2 bg-bg-2 px-3 text-fs-16 text-fg-2">
+            EUR (€)
+          </span>
+        </div>
       </FormRow>
       <FormRow>
         {money("amk-w-amount", ui.fee, "price", undefined, true)}

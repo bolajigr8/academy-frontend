@@ -80,11 +80,8 @@ export function LiveSearchClient({ query }: { query: string }) {
     staleTime: 10 * 60 * 1000,
   })
   const params = useMemo(
-    () =>
-      today
-        ? toSearchParams(state, today, filters.data?.default_currency)
-        : null,
-    [state, today, filters.data?.default_currency]
+    () => (today ? toSearchParams(state, today) : null),
+    [state, today]
   )
   const results = useQuery({
     queryKey: discoveryKeys.search(params ?? {}),

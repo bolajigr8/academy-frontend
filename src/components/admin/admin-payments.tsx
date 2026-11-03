@@ -199,7 +199,23 @@ export function Transactions({
                       </small>
                     ) : null}
                   </TableCell>
-                  <TableCell className={numberColumn}>{money(r)}</TableCell>
+                  <TableCell className={numberColumn}>
+                    {money(r)}
+                    {/* part 5: the fee inside the amount, and its rate */}
+                    {r.service_fee_minor ? (
+                      <small>
+                        {M.txFee(
+                          formatMoney({
+                            amount_minor: r.service_fee_minor,
+                            amount: (r.service_fee_minor / 100).toFixed(2),
+                            currency:
+                              r.paid_for?.academy?.price_currency ?? "EUR",
+                          }),
+                          r.service_fee_rate ?? 0
+                        )}
+                      </small>
+                    ) : null}
+                  </TableCell>
                   <TableCell>
                     <span className="flex flex-wrap gap-1.5">
                       <StatusPill

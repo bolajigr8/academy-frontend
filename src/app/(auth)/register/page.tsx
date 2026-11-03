@@ -17,6 +17,7 @@ export default async function RegisterPage({
   return (
     <RegisterClient
       initialRole={firstParam(query.role) === "academy" ? "academy" : undefined}
+      next={firstParam(query.next) ?? null}
     />
   )
 }

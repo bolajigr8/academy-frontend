@@ -29,6 +29,12 @@ import {
   notificationKeys,
 } from "@/features/notifications/api"
 import {
+  getPayoutAccount,
+  listPortalPayments,
+  paymentKeys,
+  payoutKeys,
+} from "@/features/payments/api"
+import {
   getAcademyDashboard,
   listPortalReviews,
   reviewKeys,
@@ -133,6 +139,8 @@ export function LiveDashboardClient() {
         </NativeSelect>
       </label>
 
+      {/* week 3 part 4: until the payout account is ready, getting paid is the next step */}
+      <GetPaidBanner />
       {dash.isError && !d ? (
         <ErrorState
           message={LIVE.requestFailed}
@@ -487,5 +495,52 @@ export function LiveDashboardClient() {
         </Stack>
       </Grid2>
     </>
+  )
+}
+
+/*
+ * Week 3 part 4: payouts wait until the academy's payout account is ready
+ * (nothing is lost). Until then, the dashboard says how much is waiting and
+ * takes the academy straight to the setup on its Payments page.
+ */
+function GetPaidBanner() {
+  const P = LIVE.payoutAccount
+  const account = useQuery({
+    queryKey: payoutKeys.account(),
+    queryFn: getPayoutAccount,
+  })
+  const firstPage = useQuery({
+    queryKey: paymentKeys.portal({ page: 1 }),
+    queryFn: () => listPortalPayments({ page: 1 }),
+  })
+  const status = account.data?.status
+  if (!status || status === "ready") return null
+  const waiting = firstPage.data?.meta?.totals?.EUR?.payout_pending
+  const amount =
+    waiting && waiting.amount_minor > 0 ? formatMoney(waiting) : null
+  return (
+    <section
+      aria-labelledby="h-get-paid"
+      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-lg border-2 border-border-accent bg-tint-neon-1 p-[clamp(16px,2.4vw,24px)] le-600:grid-cols-[minmax(0,1fr)]"
+    >
+      <div className="grid gap-1">
+        <h2 id="h-get-paid" className="font-display text-fs-24 font-bold">
+          {P.getPaidTitle}
+        </h2>
+        <p className="text-fs-15 text-fg-2">
+          {status === "disconnected"
+            ? P.disconnected
+            : amount
+              ? P.getPaidWaiting(amount)
+              : P.getPaidLead}
+        </p>
+      </div>
+      <ButtonLink
+        href={`${routes.club.payments}#payout-account`}
+        className="le-600:justify-self-start"
+      >
+        <Icon name="wallet" size={16} /> {P.getPaidCta}
+      </ButtonLink>
+    </section>
   )
 }

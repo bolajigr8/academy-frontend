@@ -41,10 +41,9 @@ import { valueLabel } from "@/features/academies/card-view"
 import type { ApiCountry } from "@/features/auth/api"
 import { useCountries } from "@/features/auth/hooks"
 import {
-  createPlayer,
+  savePlayer,
   deletePlayer,
   downloadPrivateFile,
-  updatePlayer,
   type ApiMeOptions,
   type ApiPlayer,
 } from "@/features/family/api"
@@ -271,7 +270,28 @@ function PlayerProfile({
         ]
           .filter(Boolean)
           .join(" · ")}
-        side={<Meter value={completePercent(p, options)} label={t.complete} />}
+        side={
+          <span className="grid justify-items-end gap-1">
+            {/* the profile fields needed to apply (the backend's required_fields) */}
+            <Meter
+              value={completePercent(p, options)}
+              label={L.profileFields}
+            />
+            {/* documents are separate: each listing asks for its own when applying */}
+            <small className="text-fs-12 text-fg-3">
+              {L.docsCount(
+                (
+                  [
+                    "passport_document",
+                    "medical_certificate",
+                    "player_cv",
+                  ] as const
+                ).filter((k) => p.files?.[k]?.uploaded).length,
+                3
+              )}
+            </small>
+          </span>
+        }
       />
       {p.owner_relationship === "self" &&
       (!p.date_of_birth ||
@@ -453,10 +473,11 @@ export function PlayerDialog({
     setBusy(true)
     try {
       const body = playerForm(d)
-      const saved =
-        d.id === null
-          ? await createPlayer(body)
-          : await updatePlayer(d.id, body)
+      // the fields, then one request per file (no request over the server's size limit);
+      // once created, a retry after a failed file updates this player, never a second one
+      const saved = await savePlayer(d.id, body, (created) =>
+        setD((x) => ({ ...x, id: created.id }))
+      )
       await queryClient.invalidateQueries({ queryKey: familyKeys.players() })
       notify(d.id === null ? L.created : L.saved)
       onSaved(saved)

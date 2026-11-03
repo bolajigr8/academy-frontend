@@ -93,6 +93,8 @@ export type DraftQuestion = {
 }
 
 export type LiveDraft = {
+  /** part 5: the currency a listing was saved in before euros only (shown as a note) */
+  pricedIn?: string
   id: number | null
   slug: string | null
   status: ApiListingStatus
@@ -197,9 +199,12 @@ export function draftFromApi(l: ApiListing, options: ApiOptions): LiveDraft {
   const base = newDraft(l.academy_id, options)
   const schedule = emptySchedule()
   for (const d of DAYS) schedule[d] = l.weekly_schedule[d] ?? ""
-  const currency = l.currency || options.default_currency
+  // week 3 part 5: euros only. A listing saved earlier in another currency is
+  // edited (and re-saved) in EUR: the API now refuses any other currency.
+  const currency = "EUR"
   return {
     ...base,
+    pricedIn: l.currency && l.currency !== "EUR" ? l.currency : undefined,
     id: l.id,
     slug: l.slug,
     status: l.status,
@@ -320,7 +325,7 @@ export function stepPayload(step: number, d: LiveDraft): ListingUpdate {
       }
     case 4:
       return {
-        currency: d.currency,
+        currency: "EUR",
         payment_frequency: d.paymentFrequency,
         price_minor: amountMinor(d.price, d.currency) ?? undefined,
         registration_fee_minor:

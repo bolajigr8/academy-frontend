@@ -22,11 +22,21 @@ import type { ApiMoney, ApiPage, ApiResponse } from "@/lib/api/types"
  * enrollment_cancelled, payment_not_due, below_minimum_charge,
  * payment_in_progress, 502 payment_provider_unavailable, 429.
  */
-export async function startCheckout(
-  paymentIds: number[]
-): Promise<{ checkout_url: string; session_id: string }> {
+export async function startCheckout(paymentIds: number[]): Promise<{
+  checkout_url: string
+  session_id: string
+  /** part 5: the total charged (the rows plus the fee) */
+  amount?: ApiMoney
+  /** part 5: the fee inside it; null when the fee is 0 */
+  service_fee?: ApiMoney | null
+}> {
   const res = await apiClient.post<
-    ApiResponse<{ checkout_url: string; session_id: string }>
+    ApiResponse<{
+      checkout_url: string
+      session_id: string
+      amount?: ApiMoney
+      service_fee?: ApiMoney | null
+    }>
   >("/academy/me/payments/checkout", { payment_ids: paymentIds })
   return res.data.data
 }
@@ -38,8 +48,10 @@ export type CheckoutStatus =
 export type ApiCheckout = {
   session_id: string
   status: CheckoutStatus
-  /** what this checkout charged */
+  /** what this checkout charged (part 5: the fee included) */
   amount: ApiMoney
+  /** part 5: the service fee inside amount; null when none was charged */
+  service_fee?: ApiMoney | null
   paid_at: string | null
   enrollment: { id: number; status: EnrollmentStatus }
   /** the rows this checkout covered, as GET /me/payments */
@@ -145,6 +157,9 @@ export type ApiAdminPayment = ApiPortalPayment & {
     id: number
     payment_status: string
     fulfilment_status: string
+    /** part 5: one fee per transaction (shared by its rows) */
+    service_fee_rate?: number | null
+    service_fee_minor?: number
   } | null
 }
 
@@ -177,6 +192,9 @@ export type ApiTransaction = {
   payment_method: string
   payment_status: "pending" | "paid" | "failed" | "expired" | (string & {})
   fulfilment_status: "pending" | "applied" | "refund_due" | (string & {})
+  /** part 5: the fee rate charged (null before the fee existed) and the fee, in minor units */
+  service_fee_rate?: number | null
+  service_fee_minor?: number
   fulfilled_at: string | null
   stripe_checkout_session_id: string | null
   stripe_payment_intent_id: string | null
@@ -342,3 +360,14 @@ export async function decidePayout(
 export const payoutKeys = {
   account: () => ["payout-account"] as const,
 }
+
+/* ---------------- week 3 part 5: the service fee (section 29) ---------------- */
+
+/**
+ * The service fee on the rows the family picked, exactly as the API computes
+ * it (section 29): once on the SUM of the rows (never row by row), the rate
+ * turned into hundredths of a percent (exact, two decimals), rounded half up
+ * to a whole minor unit, in integers. What this returns is what Stripe charges.
+ */
+export const serviceFee = (rowsMinor: number, rate: number): number =>
+  Math.floor((rowsMinor * Math.round(rate * 100) + 5000) / 10000)

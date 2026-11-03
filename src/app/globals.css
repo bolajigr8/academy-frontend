@@ -740,3 +740,15 @@
     display: none;
   }
 }
+
+/*
+ * Matchday's highlight band (matchday app/globals.css .hl-neon): a word in
+ * black on the brand lime, the same in light and dark mode; wraps cleanly.
+ */
+.hl-neon {
+  background: var(--gf-neon);
+  color: var(--text-on-neon, #000);
+  padding: 0 0.1em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}

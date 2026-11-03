@@ -208,6 +208,8 @@ export function stepDirty(
 ): boolean {
   if (step >= 8) return false
   if (!saved) return step === 0 ? d.title.trim() !== "" : false
+  // part 5: a listing saved in another currency must be re-saved in euros (the price step)
+  if (step === 4 && saved.currency && saved.currency !== "EUR") return true
   if (step === 1) {
     const c = imageChanges(d)
     return c.upload.length > 0 || c.deleteIds.length > 0

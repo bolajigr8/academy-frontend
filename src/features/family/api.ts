@@ -99,6 +99,45 @@ export async function updatePlayer(
   return res.data.data
 }
 
+/** The player's private files: each is sent in its own request (see savePlayer) */
+const PLAYER_FILE_FIELDS = new Set([
+  "profile_photo",
+  "passport_document",
+  "medical_certificate",
+  "player_cv",
+])
+
+/**
+ * Creates or updates a player in parts: the fields first, then each file in
+ * its own request ("send only what changes", week 2 part 1). The server
+ * limits a request's size (a 413 when several files travel together, e.g.
+ * four images of 260 KB over a 1 MB limit), so no request carries more than
+ * one file. `onCreated` hands back the new id at once, so a retry after a
+ * failed file updates that player instead of creating a second one.
+ */
+export async function savePlayer(
+  id: number | null,
+  form: FormData,
+  onCreated?: (player: ApiPlayer) => void
+): Promise<ApiPlayer> {
+  const fields = new FormData()
+  const files: [string, File][] = []
+  form.forEach((value, key) => {
+    if (PLAYER_FILE_FIELDS.has(key) && value instanceof File)
+      files.push([key, value])
+    else fields.append(key, value)
+  })
+  let player =
+    id === null ? await createPlayer(fields) : await updatePlayer(id, fields)
+  if (id === null) onCreated?.(player)
+  for (const [key, file] of files) {
+    const one = new FormData()
+    one.append(key, file)
+    player = await updatePlayer(player.id, one)
+  }
+  return player
+}
+
 /** DELETE /academy/me/players/{id}: refused (player_in_use) while an application is in progress */
 export async function deletePlayer(id: number): Promise<void> {
   await apiClient.delete(`/academy/me/players/${id}`)

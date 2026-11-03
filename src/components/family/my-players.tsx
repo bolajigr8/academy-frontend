@@ -116,6 +116,19 @@ export function MyPlayers() {
                       </StatusPill>
                     </span>
                   </div>
+                  {/* documents are separate from "Complete" (the profile fields) */}
+                  <p className="text-fs-12 text-fg-3">
+                    {LIVE.players.docsCount(
+                      (
+                        [
+                          "passport_document",
+                          "medical_certificate",
+                          "player_cv",
+                        ] as const
+                      ).filter((k) => p.files?.[k]?.uploaded).length,
+                      3
+                    )}
+                  </p>
                   {!p.is_complete && p.missing_fields.length ? (
                     <p className="text-fs-13 text-fg-2">
                       <b className="text-fg-1">{L.missing}</b>{" "}

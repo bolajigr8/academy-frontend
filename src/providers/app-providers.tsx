@@ -32,7 +32,10 @@ function ApiErrorToasts() {
         notifyError(
           getApiStatus(error) === 429
             ? LIVE.tooManyAttempts
-            : getApiErrorMessage(error, LIVE.requestFailed)
+            : // the web server refused the upload's size before the API saw it
+              getApiStatus(error) === 413
+              ? LIVE.uploadTooLarge
+              : getApiErrorMessage(error, LIVE.requestFailed)
         )
       ),
     []

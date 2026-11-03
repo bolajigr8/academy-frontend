@@ -14,12 +14,12 @@ import type {
   ApiEnrollmentCore,
   ApiEnrollmentPayment,
 } from "@/features/enrollments/api"
-import { ENROLLMENT_TONE, sumByCurrency } from "@/features/enrollments/logic"
+import { ENROLLMENT_TONE } from "@/features/enrollments/logic"
 import { formatMoney } from "@/lib/money"
 import { routes } from "@/routes"
 
 import { ScheduleTable } from "./schedule-table"
-import { payable, usePay } from "./use-pay"
+import { payable, payTotals, usePay } from "./use-pay"
 
 const t = LIVE.enrollment
 const day = (iso: string) => DATES.fmt(iso.slice(0, 10))
@@ -33,6 +33,7 @@ const day = (iso: string) => DATES.fmt(iso.slice(0, 10))
 export function EnrollmentCard({
   e,
   side,
+  feeRate,
 }: {
   e: ApiEnrollmentCore & {
     payments: ApiEnrollmentPayment[]
@@ -40,8 +41,15 @@ export function EnrollmentCard({
     cancel_reason?: string | null
   }
   side: "family" | "academy"
+  /** the service fee rate, when the caller has it separately */
+  feeRate?: number
 }) {
   const { pay, busy } = usePay()
+  // part 5: the current fee rate (meta.service_fee_rate, carried as feeRate)
+  const totals = payTotals(
+    payable(e.payments),
+    feeRate ?? (e as { feeRate?: number }).feeRate ?? 0
+  )
   return (
     <CardBlock aria-labelledby="h-enrollment">
       <SectionHead
@@ -72,13 +80,21 @@ export function EnrollmentCard({
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => pay(payable(e.payments))} aria-busy={busy}>
             <Icon name="wallet" size={16} />{" "}
-            {t.payAmount(
-              sumByCurrency(payable(e.payments).map((r) => r.amount))
-            )}
+            {/* the total Stripe will charge: the lines plus the service fee */}
+            {t.payAmount(formatMoney(totals.total))}
           </Button>
           <ButtonLink href={routes.family.payments} variant="secondary">
             {t.goPayments}
           </ButtonLink>
+          {totals.fee ? (
+            <p className="w-full text-fs-13 text-fg-2">
+              {t.feeBreakdown(
+                formatMoney(totals.lines),
+                totals.feeRate,
+                formatMoney(totals.fee)
+              )}
+            </p>
+          ) : null}
           <p className="w-full text-fs-13 text-fg-3">{t.payHint}</p>
         </div>
       ) : null}

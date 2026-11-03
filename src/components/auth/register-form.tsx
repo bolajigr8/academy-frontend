@@ -23,6 +23,7 @@ import type { ApiOrganizationType } from "@/features/auth/api"
 import { useCountries, useRegister } from "@/features/auth/hooks"
 import { startDemoSession, startSession } from "@/features/auth/session"
 import { passwordScore } from "@/features/applications/flow"
+import { safeNext } from "@/features/auth/next"
 import {
   REGISTER_IDS as ID,
   validateRegister,
@@ -42,6 +43,8 @@ type Role = "family" | "academy"
 type Props = {
   /** the ?role= value: "academy" pre-selects the academy option */
   initialRole?: AuthRole
+  /** where the person was going (e.g. an apply link); a family returns there */
+  next?: string | null
 }
 
 const EMPTY: RegisterValues = {
@@ -74,7 +77,7 @@ const SERVER_FIELDS = {
  * success panel; the account is signed in.
  * mock mode (prototype behavior): nothing is sent; the matching demo persona signs in.
  */
-export function RegisterForm({ initialRole }: Props) {
+export function RegisterForm({ initialRole, next = null }: Props) {
   const router = useRouter()
   const live = isLive("auth")
   const countries = useCountries()
@@ -153,7 +156,15 @@ export function RegisterForm({ initialRole }: Props) {
 
   const cont = () => {
     if (!live) startDemoSession(academy ? "host" : "family")
-    router.push(academy ? routes.club.dashboard : routes.family.players())
+    // a family that came from an apply link goes back to it (it can add its
+    // player there); otherwise to Player profiles, the first thing to set up
+    router.push(
+      academy
+        ? routes.club.dashboard
+        : next
+          ? safeNext(next, "family")
+          : routes.family.players()
+    )
   }
 
   const panel = academy ? t.panelAcademy : t.panelFamily
